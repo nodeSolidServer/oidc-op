@@ -75,7 +75,7 @@ class RPInitiatedLogoutRequest extends BaseRequest {
     let { id_token_hint: hint } = params
 
     if (!hint) {
-      return request
+      return Promise.resolve(request)
     }
 
     return IDToken.decode(hint)
@@ -119,7 +119,7 @@ class RPInitiatedLogoutRequest extends BaseRequest {
     // post logout redirect URI has been pre-registered
     let clientId = decodedHint.clientId
 
-    return provider.backend.get('clients', cliendId)
+    return provider.backend.get('clients', clientId)
       .then(client => {
         if (!client) {
           throw new Error('Invalid ID Token hint (client not found)')
@@ -147,10 +147,6 @@ class RPInitiatedLogoutRequest extends BaseRequest {
      * `state` parameter - no validation needed. Will be passed back to the RP
      * in the `redirectToRP()` step.
      */
-    if (uri && !hint) {
-      throw new Error('post_logout_redirect_uri requires an id_token_hint')
-    }
-
     return Promise.resolve(request)
       .then(request.validateIdTokenHint)
       .then(request.validatePostLogoutUri)
