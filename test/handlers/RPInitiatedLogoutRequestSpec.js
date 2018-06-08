@@ -30,27 +30,25 @@ const reqWithParams = HttpMocks.createRequest({
 
 describe('RPInitiatedLogoutRequest', () => {
   describe('handle()', () => {
-    it('should invoke injected host.logout', done => {
+    it('should invoke injected host.logout', () => {
       let res = HttpMocks.createResponse()
       let logoutSpy = sinon.stub(provider.host, 'logout').resolves()
 
-      RPInitiatedLogoutRequest.handle(reqNoParams, res, provider)
+      return RPInitiatedLogoutRequest.handle(reqNoParams, res, provider)
         .then(() => {
           expect(logoutSpy).to.have.been.called()
-          done()
         })
     })
   })
 
   describe('constructor()', () => {
-    it('should parse the incoming request params', done => {
+    it('should parse the incoming request params', () => {
       let res = {}
       let request = new RPInitiatedLogoutRequest(reqWithParams, res, provider)
 
       expect(request).to.have.property('params')
       expect(Object.keys(request.params).length).to.equal(3)
       expect(request.params.state).to.equal('abc123')
-      done()
     })
   })
 
@@ -60,7 +58,7 @@ describe('RPInitiatedLogoutRequest', () => {
   })
 
   describe('redirectOrRespond()', () => {
-    it('should redirect to RP if logout uri provided', done => {
+    it('should redirect to RP if logout uri provided', () => {
       let res = HttpMocks.createResponse()
       let req = HttpMocks.createRequest({
         method: 'GET',
@@ -76,10 +74,9 @@ describe('RPInitiatedLogoutRequest', () => {
       expect(request.respond).to.not.have.been.called()
       expect(res.statusCode).to.equal(302)
       expect(res._getRedirectUrl()).to.equal(postLogoutRedirectUri)
-      done()
     })
 
-    it('should respond with a 204 if no logout uri provided', done => {
+    it('should respond with a 204 if no logout uri provided', () => {
       let res = HttpMocks.createResponse()
       let request = new RPInitiatedLogoutRequest(reqNoParams, res, provider)
       request.redirectToRP = sinon.stub().throws()
@@ -88,7 +85,6 @@ describe('RPInitiatedLogoutRequest', () => {
 
       expect(request.redirectToRP).to.not.have.been.called()
       expect(res.statusCode).to.equal(204)
-      done()
     })
   })
 
