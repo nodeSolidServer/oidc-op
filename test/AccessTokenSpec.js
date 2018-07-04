@@ -32,8 +32,6 @@ describe('AccessToken', () => {
   var provider
 
   before(function () {
-    this.timeout(10000)
-
     let configPath = path.join(__dirname, 'config', 'provider.json')
 
     let storedConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'))
