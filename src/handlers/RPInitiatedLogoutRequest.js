@@ -8,13 +8,29 @@ const qs = require('qs')
 const BaseRequest = require('./BaseRequest')
 const IDToken = require('../IDToken')
 
+/**
+ * Session spec defines the following params to the RP Initiated Logout request:
+ *   - `id_token_hint`
+ *   - `post_logout_redirect_uri`
+ *   - `state`
+ *
+ * @see https://openid.net/specs/openid-connect-session-1_0.html#RPLogout
+ * @see https://openid.net/specs/openid-connect-frontchannel-1_0.html#RPInitiated
+ * @see https://openid.net/specs/openid-connect-backchannel-1_0.html#RPInitiated
+ */
 class RPInitiatedLogoutRequest extends BaseRequest {
   /**
+   * @param req {IncomingRequest}
+   * @param res {ServerResponse}
+   * @param provider {Provider}
+   */
+  constructor (req, res, provider) {
+    super(req, res, provider)
+    this.params = RPInitiatedLogoutRequest.getParams(this)
+  }
+
+  /**
    * RP Initiated Logout Request Handler
-   *
-   * @see https://openid.net/specs/openid-connect-session-1_0.html#RPLogout
-   * @see https://openid.net/specs/openid-connect-frontchannel-1_0.html#RPInitiated
-   * @see https://openid.net/specs/openid-connect-backchannel-1_0.html#RPInitiated
    *
    * @param req {HTTPRequest}
    * @param res {HTTPResponse}
@@ -22,8 +38,8 @@ class RPInitiatedLogoutRequest extends BaseRequest {
    * @returns {Promise}
    */
   static handle (req, res, provider) {
-    let { host } = provider
-    let request = new RPInitiatedLogoutRequest(req, res, provider)
+    const { host } = provider
+    const request = new RPInitiatedLogoutRequest(req, res, provider)
 
     return Promise
       .resolve(request)
@@ -40,23 +56,6 @@ class RPInitiatedLogoutRequest extends BaseRequest {
   }
 
   /**
-   * Constructor
-   *
-   * Session spec defines the following params to the RP Initiated Logout request:
-   *   - `id_token_hint`
-   *   - `post_logout_redirect_uri`
-   *   - `state`
-   *
-   * @param req {HTTPRequest}
-   * @param res {HTTPResponse}
-   * @param provider {Provider}
-   */
-  constructor (req, res, provider) {
-    super(req, res, provider)
-    this.params = RPInitiatedLogoutRequest.getParams(this)
-  }
-
-  /**
    * validateIdTokenHint
    *
    * Validates the `id_token_hint` parameter
@@ -68,71 +67,94 @@ class RPInitiatedLogoutRequest extends BaseRequest {
    * audience of the ID Token when it is used as an `id_token_hint` value.
    *
    * @param request {RPInitiatedLogoutRequest}
+   *
+   * @throws {Error} 400 Bad Request if ID Token hint can't be decoded
+   *   or verified
+   *
    * @returns {Promise<RPInitiatedLogoutRequest>} Chainable
    */
-  validateIdTokenHint (request) {
-    let { provider, params } = request
-    let { id_token_hint: hint } = params
+  async validateIdTokenHint (request) {
+    const { provider, params } = request
+    const idTokenHint = params['id_token_hint']
+    let decodedHint
 
-    if (!hint) {
-      return Promise.resolve(request)
+    if (!idTokenHint) {
+      return request
     }
 
-    return IDToken.decode(hint)
-      .then(decoded => {
-        if (!decoded.resolveKeys(provider.keys.jwks)) {
-          throw new Error('ID Token hint keys cannot be resolved')
-        }
+    try {
+      decodedHint = await IDToken.decode(idTokenHint)
+    } catch (error) {
+      console.error('Error decoding ID Token hint (', idTokenHint, '):', error)
+      this.badRequest({error_description: 'Error decoding ID Token hint'})
+    }
 
-        return decoded.verify()
-          .then(() => {
-            request.params.decodedHint = decoded
-            return request
-          })
+    if (!decodedHint.resolveKeys(provider.keys.jwks)) {
+      this.badRequest({
+        error_description: 'ID Token hint signing keys cannot be resolved'
       })
+    }
+
+    try {
+      await decodedHint.verify()
+    } catch (cause) {
+      console.error('Could not verify ID Token hint:', decodedHint)
+      this.badRequest({error_description: 'Could not verify ID Token hint'})
+    }
+
+    request.params.decodedHint = decodedHint
+
+    return request
   }
 
   /**
-   * validatePostLogoutUri
-   *
    * Validates that `post_logout_redirect_uri` has been registered
    *
    * The value MUST have been previously registered with the OP, either using
    * the `post_logout_redirect_uris` Registration parameter
    * or via another mechanism.
    *
-   * Question: what's this about 'another mechanism'?
-   *
    * @param request {RPInitiatedLogoutRequest}
+   *
+   * @throws {Error}
+   *
    * @returns {Promise<RPInitiatedLogoutRequest>} Chainable
    */
-  validatePostLogoutUri (request) {
-    let { provider, params } = request
-    let { post_logout_redirect_uri: uri, id_token_hint: hint } = params
-    let { decodedHint } = params
+  async validatePostLogoutUri (request) {
+    const { provider, params } = request
+    const { post_logout_redirect_uri: uri } = params
+    const { decodedHint } = params
 
     if (!uri) {
       return request
     }
 
+    if (!decodedHint) {
+      return this.badRequest({
+        error_description: 'post_logout_redirect_uri requires id_token_hint'
+      })
+    }
+
     // Get the client from the ID Token Hint to validate that the
     // post logout redirect URI has been pre-registered
-    let clientId = decodedHint.clientId
+    const clientId = decodedHint.payload.azp || decodedHint.payload.aud
 
-    return provider.backend.get('clients', clientId)
-      .then(client => {
-        if (!client) {
-          throw new Error('Invalid ID Token hint (client not found)')
-        }
-
-        // Check that the post logout uri has been registered
-        if (!client['post_logout_redirect_uris'].includes(uri)) {
-          throw new Error('post_logout_redirect_uri must be pre-registered')
-        }
-
-        // Valid
-        return request
+    const client = await provider.backend.get('clients', clientId)
+    if (!client) {
+      return this.badRequest({
+        error_description: 'Invalid ID Token hint (client not found)'
       })
+    }
+
+    // Check that the post logout uri has been registered
+    if (!client['post_logout_redirect_uris'].includes(uri)) {
+      return this.badRequest({
+        error_description: 'post_logout_redirect_uri must be pre-registered'
+      })
+    }
+
+    // Valid
+    return request
   }
 
   /**
@@ -191,7 +213,7 @@ class RPInitiatedLogoutRequest extends BaseRequest {
       uri = `${uri}?${response}`
     }
 
-    res.redirect(uri)  // 302 redirect
+    res.redirect(uri) // 302 redirect
   }
 
   /**
