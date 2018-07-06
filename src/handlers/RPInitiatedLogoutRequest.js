@@ -8,6 +8,8 @@ const qs = require('qs')
 const BaseRequest = require('./BaseRequest')
 const IDToken = require('../IDToken')
 
+const DEFAULT_POST_LOGOUT_URI = '/'
+
 /**
  * Session spec defines the following params to the RP Initiated Logout request:
  *   - `id_token_hint`
@@ -51,7 +53,7 @@ class RPInitiatedLogoutRequest extends BaseRequest {
       // MUST log out the End-User.
       .then(host.logout)
 
-      .then(request.redirectOrRespond.bind(request))
+      .then(request.redirectToGoodbye.bind(request))
       .catch(request.error.bind(request))
   }
 
@@ -163,6 +165,8 @@ class RPInitiatedLogoutRequest extends BaseRequest {
    * @see https://openid.net/specs/openid-connect-session-1_0.html#RPLogout
    *
    * @param request {RPInitiatedLogoutRequest}
+   *
+   * @returns {Promise<RPInitiatedLogoutRequest>} Chainable
    */
   validate (request) {
     /**
@@ -175,8 +179,10 @@ class RPInitiatedLogoutRequest extends BaseRequest {
   }
 
   /**
-   * Redirect to RP or Respond
+   * Redirects the user-agent to a post logout URI. Also passes through the
+   * `state` parameter, if supplied by the RP.
    *
+   * From the spec:
    * In some cases, the RP will request that the End-User's User Agent to be
    * redirected back to the RP after a logout has been performed. Post-logout
    * redirection is only done when the logout is RP-initiated, in which case the
@@ -185,54 +191,29 @@ class RPInitiatedLogoutRequest extends BaseRequest {
    *
    * @see https://openid.net/specs/openid-connect-session-1_0.html#RedirectionAfterLogout
    *
-   * @returns {null}
+   * Implementor's notes:
+   * For usability reasons, the user should still be redirected somewhere after
+   * logout, even if no redirect uri was passed in by the RP client (we can't
+   * just show them a 204/no content). For that reason, we allow the OP host
+   * config to provide a default `post_logout_redirect_uri` in case none is
+   * provided. Since this is controlled by the host/OP (and not by the RP),
+   * this is still respectful of the OAuth2 threat model, and mitigates the
+   * risk of rogue redirects.
    */
-  redirectOrRespond () {
-    let { params: { post_logout_redirect_uri: postLogoutRedirectUri } } = this
-    if (postLogoutRedirectUri) {
-      this.redirectToRP()
-    } else {
-      this.respond()
-    }
-  }
+  redirectToGoodbye () {
+    const { host, res, params } = this
+    const { state } = params
 
-  /**
-   * Redirect To RP
-   *
-   * Redirects the user-agent back to the RP, if requested (by the RP providing
-   * a `post_logout_redirect_uri` parameter). Also passes through the `state`
-   * parameter, if supplied by the RP.
-   *
-   * @returns {null}
-   */
-  redirectToRP () {
-    let { res, params: { post_logout_redirect_uri: uri, state } } = this
+    let uri = params['post_logout_redirect_uri'] ||
+      host.defaults['post_logout_redirect_uri'] ||
+      DEFAULT_POST_LOGOUT_URI
 
     if (state) {
-      let response = qs.stringify({ state })
-      uri = `${uri}?${response}`
+      const queryString = qs.stringify({ state })
+      uri = `${uri}?${queryString}`
     }
 
     res.redirect(uri) // 302 redirect
-  }
-
-  /**
-   * Respond
-   *
-   * Responds to the RP Initiated Logout request with a 204 No Content, if the
-   * RP did not supply a `post_logout_redirect_uri` parameter.
-   *
-   * @returns {null}
-   */
-  respond () {
-    let { res } = this
-
-    res.set({
-      'Cache-Control': 'no-store',
-      'Pragma': 'no-cache'
-    })
-
-    res.status(204).send()
   }
 }
 
