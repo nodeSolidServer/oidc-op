@@ -3,7 +3,7 @@
  */
 const crypto = require('@trust/webcrypto')
 const base64url = require('base64url')
-const {JWT} = require('@trust/jose')
+const {JWT} = require('@solid/jose')
 const IDTokenSchema = require('./schemas/IDTokenSchema')
 
 const DEFAULT_MAX_AGE = 1209600  // Default ID token expiration, in seconds

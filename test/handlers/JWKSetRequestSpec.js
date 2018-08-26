@@ -27,7 +27,7 @@ describe('JWKSetRequest', () => {
   let req, res, provider
 
   before(function () {
-    this.timeout(5000)
+    this.timeout(25000)
 
     req = HttpMocks.createRequest()
     res = HttpMocks.createResponse()

@@ -5,7 +5,7 @@
  */
 const url = require('url')
 const {JSONDocument} = require('@trust/json-document')
-const KeyChain = require('@trust/keychain')
+const KeyChain = require('@solid/keychain')
 const ProviderSchema = require('./schemas/ProviderSchema')
 const AuthenticationRequest = require('./handlers/AuthenticationRequest')
 const OpenIDConfigurationRequest = require('./handlers/OpenIDConfigurationRequest')

@@ -30,7 +30,7 @@ const TokenRequest = require(path.join(cwd, 'src', 'handlers', 'TokenRequest'))
 const UserInfoRequest = require(path.join(cwd, 'src', 'handlers', 'UserInfoRequest'))
 const RPInitiatedLogoutRequest = require(path.join(cwd, 'src', 'handlers', 'RPInitiatedLogoutRequest'))
 const {JSONSchema} = require('@trust/json-document')
-const KeyChain = require('@trust/keychain')
+const KeyChain = require('@solid/keychain')
 
 /**
  * Tests
@@ -329,7 +329,8 @@ describe('OpenID Connect Provider', () => {
       provider = new Provider({ issuer: 'https://example.com' })
     })
 
-    it('should return a new keychain', () => {
+    it('should return a new keychain', function() {
+      this.timeout(25000);
       return provider.generateKeyChain()
         .then(keys => {
           expect(keys).to.be.an.instanceof(KeyChain)

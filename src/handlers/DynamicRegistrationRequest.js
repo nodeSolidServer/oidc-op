@@ -4,7 +4,7 @@
  * Dependencies
  * @ignore
  */
-const {JWT} = require('@trust/jose')
+const {JWT} = require('@solid/jose')
 const crypto = require('@trust/webcrypto')
 const url = require('url')
 const BaseRequest = require('./BaseRequest')
@@ -204,5 +204,3 @@ class DynamicRegistrationRequest extends BaseRequest {
  * Export
  */
 module.exports = DynamicRegistrationRequest
-
-

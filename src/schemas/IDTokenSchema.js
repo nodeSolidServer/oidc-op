@@ -1,7 +1,7 @@
 /**
  * Local dependencies
  */
-const {JWTSchema, JWKSchema} = require('@trust/jose')
+const {JWTSchema, JWKSchema} = require('@solid/jose')
 
 /**
  * IDToken Schema
