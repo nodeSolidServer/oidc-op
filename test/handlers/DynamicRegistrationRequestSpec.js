@@ -34,7 +34,7 @@ describe('DynamicRegistrationRequest', () => {
   let request
 
   before(function () {
-    this.timeout(5000)
+    this.timeout(25000)
 
     let configPath = path.join(__dirname, '..', 'config', 'provider.json')
 

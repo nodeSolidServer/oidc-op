@@ -10,7 +10,7 @@ const chai = require('chai')
 const sinon = require('sinon')
 const HttpMocks = require('node-mocks-http')
 const MemoryStore = require(path.join(cwd, 'test', 'backends', 'MemoryStore'))
-const { JWT } = require('@trust/jose')
+const { JWT } = require('@solid/jose')
 
 /**
  * Assertions
@@ -45,7 +45,7 @@ describe('AuthenticationRequest', () => {
   let provider, params, req, res, request
 
   before(function () {
-    this.timeout(5000)
+    this.timeout(25000)
 
     let configPath = path.join(__dirname, '..', 'config', 'provider.json')
 

@@ -6,7 +6,7 @@
 const chai = require('chai')
 const fs = require('fs')
 const path = require('path')
-const { JWT } = require('@trust/jose')
+const { JWT } = require('@solid/jose')
 
 /**
  * Assertions

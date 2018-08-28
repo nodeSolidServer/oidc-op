@@ -8,7 +8,7 @@ const BaseRequest = require('./BaseRequest')
 const AccessToken = require('../AccessToken')
 const AuthorizationCode = require('../AuthorizationCode')
 const IDToken = require('../IDToken')
-const { JWT, JWK, JWKSet } = require('@trust/jose')
+const { JWT, JWK, JWKSet } = require('@solid/jose')
 const { URL } = require('whatwg-url')
 
 /**
@@ -622,4 +622,3 @@ class AuthenticationRequest extends BaseRequest {
  * Export
  */
 module.exports = AuthenticationRequest
-
