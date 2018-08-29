@@ -1,7 +1,7 @@
 # OpenID Connect for Nodejs
 
-[![Build Status](https://travis-ci.org/anvilresearch/oidc-op.svg?branch=master)](https://travis-ci.org/anvilresearch/oidc-op)
-[![codecov](https://codecov.io/gh/anvilresearch/oidc-op/branch/master/graph/badge.svg)](https://codecov.io/gh/anvilresearch/oidc-op)
+[![Build Status](https://travis-ci.org/solid/oidc-op.svg?branch=master)](https://travis-ci.org/solid/oidc-op)
+[![codecov](https://codecov.io/gh/solid/oidc-op/branch/master/graph/badge.svg)](https://codecov.io/gh/solid/oidc-op)
 
 
 This library aims to implement a full-featured OpenID Connect Provider for
@@ -35,7 +35,7 @@ This package is a work in progress, dependent on other ongoing projects. Code
 contained herein will be completed when the following dependencies are ready to
 release:
 
-- [anvilresearch/jose](https://github.com/anvilresearch/jose)
+- [solid/jose](https://github.com/solid/jose)
 - [anvilresearch/webcrypto](https://github.com/anvilresearch/webcrypto)
 - [anvilresearch/json-document](https://github.com/anvilresearch/json-document)
 
