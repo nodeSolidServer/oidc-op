@@ -6,14 +6,33 @@
  */
 const qs = require('qs')
 const BaseRequest = require('./BaseRequest')
+const IDToken = require('../IDToken')
 
+const DEFAULT_POST_LOGOUT_URI = '/'
+
+/**
+ * Session spec defines the following params to the RP Initiated Logout request:
+ *   - `id_token_hint`
+ *   - `post_logout_redirect_uri`
+ *   - `state`
+ *
+ * @see https://openid.net/specs/openid-connect-session-1_0.html#RPLogout
+ * @see https://openid.net/specs/openid-connect-frontchannel-1_0.html#RPInitiated
+ * @see https://openid.net/specs/openid-connect-backchannel-1_0.html#RPInitiated
+ */
 class RPInitiatedLogoutRequest extends BaseRequest {
   /**
+   * @param req {IncomingRequest}
+   * @param res {ServerResponse}
+   * @param provider {Provider}
+   */
+  constructor (req, res, provider) {
+    super(req, res, provider)
+    this.params = RPInitiatedLogoutRequest.getParams(this)
+  }
+
+  /**
    * RP Initiated Logout Request Handler
-   *
-   * @see https://openid.net/specs/openid-connect-session-1_0.html#RPLogout
-   * @see https://openid.net/specs/openid-connect-frontchannel-1_0.html#RPInitiated
-   * @see https://openid.net/specs/openid-connect-backchannel-1_0.html#RPInitiated
    *
    * @param req {HTTPRequest}
    * @param res {HTTPResponse}
@@ -21,8 +40,8 @@ class RPInitiatedLogoutRequest extends BaseRequest {
    * @returns {Promise}
    */
   static handle (req, res, provider) {
-    let { host } = provider
-    let request = new RPInitiatedLogoutRequest(req, res, provider)
+    const { host } = provider
+    const request = new RPInitiatedLogoutRequest(req, res, provider)
 
     return Promise
       .resolve(request)
@@ -34,25 +53,110 @@ class RPInitiatedLogoutRequest extends BaseRequest {
       // MUST log out the End-User.
       .then(host.logout)
 
-      .then(request.redirectOrRespond.bind(request))
+      .then(request.redirectToGoodbye.bind(request))
       .catch(request.error.bind(request))
   }
 
   /**
-   * Constructor
+   * validateIdTokenHint
    *
-   * Session spec defines the following params to the RP Initiated Logout request:
-   *   - `id_token_hint`
-   *   - `post_logout_redirect_uri`
-   *   - `state`
+   * Validates the `id_token_hint` parameter
    *
-   * @param req {HTTPRequest}
-   * @param res {HTTPResponse}
-   * @param provider {Provider}
+   * RECOMMENDED. Previously issued ID Token passed to the logout endpoint as
+   * a hint about the End-User's current authenticated session with the Client.
+   * This is used as an indication of the identity of the End-User that the RP
+   * is requesting be logged out by the OP. The OP *need not* be listed as an
+   * audience of the ID Token when it is used as an `id_token_hint` value.
+   *
+   * @param request {RPInitiatedLogoutRequest}
+   *
+   * @throws {Error} 400 Bad Request if ID Token hint can't be decoded
+   *   or verified
+   *
+   * @returns {Promise<RPInitiatedLogoutRequest>} Chainable
    */
-  constructor (req, res, provider) {
-    super(req, res, provider)
-    this.params = RPInitiatedLogoutRequest.getParams(this)
+  async validateIdTokenHint (request) {
+    const { provider, params } = request
+    const idTokenHint = params['id_token_hint']
+    let decodedHint
+
+    if (!idTokenHint) {
+      return request
+    }
+
+    try {
+      decodedHint = await IDToken.decode(idTokenHint)
+    } catch (error) {
+      console.error('Error decoding ID Token hint (', idTokenHint, '):', error)
+      this.badRequest({error_description: 'Error decoding ID Token hint'})
+    }
+
+    if (!decodedHint.resolveKeys(provider.keys.jwks)) {
+      this.badRequest({
+        error_description: 'ID Token hint signing keys cannot be resolved'
+      })
+    }
+
+    try {
+      await decodedHint.verify()
+    } catch (cause) {
+      console.error('Could not verify ID Token hint:', decodedHint)
+      this.badRequest({error_description: 'Could not verify ID Token hint'})
+    }
+
+    request.params.decodedHint = decodedHint
+
+    return request
+  }
+
+  /**
+   * Validates that `post_logout_redirect_uri` has been registered
+   *
+   * The value MUST have been previously registered with the OP, either using
+   * the `post_logout_redirect_uris` Registration parameter
+   * or via another mechanism.
+   *
+   * @param request {RPInitiatedLogoutRequest}
+   *
+   * @throws {Error}
+   *
+   * @returns {Promise<RPInitiatedLogoutRequest>} Chainable
+   */
+  async validatePostLogoutUri (request) {
+    const { provider, params } = request
+    const { post_logout_redirect_uri: uri } = params
+    const { decodedHint } = params
+
+    if (!uri) {
+      return request
+    }
+
+    if (!decodedHint) {
+      return this.badRequest({
+        error_description: 'post_logout_redirect_uri requires id_token_hint'
+      })
+    }
+
+    // Get the client from the ID Token Hint to validate that the
+    // post logout redirect URI has been pre-registered
+    const clientId = decodedHint.payload.azp || decodedHint.payload.aud
+
+    const client = await provider.backend.get('clients', clientId)
+    if (!client) {
+      return this.badRequest({
+        error_description: 'Invalid ID Token hint (client not found)'
+      })
+    }
+
+    // Check that the post logout uri has been registered
+    if (!client['post_logout_redirect_uris'].includes(uri)) {
+      return this.badRequest({
+        error_description: 'post_logout_redirect_uri must be pre-registered'
+      })
+    }
+
+    // Valid
+    return request
   }
 
   /**
@@ -61,37 +165,24 @@ class RPInitiatedLogoutRequest extends BaseRequest {
    * @see https://openid.net/specs/openid-connect-session-1_0.html#RPLogout
    *
    * @param request {RPInitiatedLogoutRequest}
+   *
+   * @returns {Promise<RPInitiatedLogoutRequest>} Chainable
    */
   validate (request) {
     /**
-     * `state` parameter - no validation need it. Will be passed back to the RP
+     * `state` parameter - no validation needed. Will be passed back to the RP
      * in the `redirectToRP()` step.
      */
-
-    /**
-     * TODO: Validate `id_token_hint` (validate as ID Token *except* for `aud`)
-     *
-     * RECOMMENDED. Previously issued ID Token passed to the logout endpoint as
-     * a hint about the End-User's current authenticated session with the Client.
-     * This is used as an indication of the identity of the End-User that the RP
-     * is requesting be logged out by the OP. The OP *need not* be listed as an
-     * audience of the ID Token when it is used as an `id_token_hint` value.
-     */
-
-    /**
-     * TODO: Validate that `post_logout_redirect_uri` has been registered
-     *
-     * The value MUST have been previously registered with the OP, either using
-     * the `post_logout_redirect_uris` Registration parameter
-     * or via another mechanism.
-     *
-     * Question: what's this about 'another mechanism'?
-     */
+    return Promise.resolve(request)
+      .then(request.validateIdTokenHint)
+      .then(request.validatePostLogoutUri)
   }
 
   /**
-   * Redirect to RP or Respond
+   * Redirects the user-agent to a post logout URI. Also passes through the
+   * `state` parameter, if supplied by the RP.
    *
+   * From the spec:
    * In some cases, the RP will request that the End-User's User Agent to be
    * redirected back to the RP after a logout has been performed. Post-logout
    * redirection is only done when the logout is RP-initiated, in which case the
@@ -100,54 +191,29 @@ class RPInitiatedLogoutRequest extends BaseRequest {
    *
    * @see https://openid.net/specs/openid-connect-session-1_0.html#RedirectionAfterLogout
    *
-   * @returns {null}
+   * Implementor's notes:
+   * For usability reasons, the user should still be redirected somewhere after
+   * logout, even if no redirect uri was passed in by the RP client (we can't
+   * just show them a 204/no content). For that reason, we allow the OP host
+   * config to provide a default `post_logout_redirect_uri` in case none is
+   * provided. Since this is controlled by the host/OP (and not by the RP),
+   * this is still respectful of the OAuth2 threat model, and mitigates the
+   * risk of rogue redirects.
    */
-  redirectOrRespond () {
-    let { params: { post_logout_redirect_uri: postLogoutRedirectUri } } = this
-    if (postLogoutRedirectUri) {
-      this.redirectToRP()
-    } else {
-      this.respond()
-    }
-  }
+  redirectToGoodbye () {
+    const { host, res, params } = this
+    const { state } = params
 
-  /**
-   * Redirect To RP
-   *
-   * Redirects the user-agent back to the RP, if requested (by the RP providing
-   * a `post_logout_redirect_uri` parameter). Also passes through the `state`
-   * parameter, if supplied by the RP.
-   *
-   * @returns {null}
-   */
-  redirectToRP () {
-    let { res, params: { post_logout_redirect_uri: uri, state } } = this
+    let uri = params['post_logout_redirect_uri'] ||
+      host.defaults['post_logout_redirect_uri'] ||
+      DEFAULT_POST_LOGOUT_URI
 
     if (state) {
-      let response = qs.stringify({ state })
-      uri = `${uri}?${response}`
+      const queryString = qs.stringify({ state })
+      uri = `${uri}?${queryString}`
     }
 
-    res.redirect(uri)  // 302 redirect
-  }
-
-  /**
-   * Respond
-   *
-   * Responds to the RP Initiated Logout request with a 204 No Content, if the
-   * RP did not supply a `post_logout_redirect_uri` parameter.
-   *
-   * @returns {null}
-   */
-  respond () {
-    let { res } = this
-
-    res.set({
-      'Cache-Control': 'no-store',
-      'Pragma': 'no-cache'
-    })
-
-    res.status(204).send()
+    res.redirect(uri) // 302 redirect
   }
 }
 

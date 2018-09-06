@@ -45,8 +45,6 @@ describe('AuthenticationRequest', () => {
   let provider, params, req, res, request
 
   before(function () {
-    this.timeout(25000)
-
     let configPath = path.join(__dirname, '..', 'config', 'provider.json')
 
     let storedConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'))

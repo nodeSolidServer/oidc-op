@@ -48,7 +48,7 @@
     "base64url": "^3.0.0",
     "pem-jwk": "^1.5.1",
     "qs": "^6.5.2",
-    "whatwg-url": "^6.4.1"
+    "whatwg-url": "^6.5.0"
   },
   "devDependencies": {
     "chai": "^4.1.2",
@@ -58,8 +58,8 @@
     "mocha": "^5.2.0",
     "node-mocks-http": "^1.7.0",
     "nyc": "^12.0.2",
-    "sinon": "^5.1.0",
-    "sinon-chai": "^3.1.0",
+    "sinon": "^6.1.0",
+    "sinon-chai": "^3.2.0",
     "standard": "^11.0.1"
   },
   "nyc": {
@@ -68,5 +68,15 @@
       "text-summary"
     ],
     "cache": true
+  },
+  "standard": {
+    "globals": [
+      "after",
+      "afterEach",
+      "before",
+      "beforeEach",
+      "describe",
+      "it"
+    ]
   }
 }
