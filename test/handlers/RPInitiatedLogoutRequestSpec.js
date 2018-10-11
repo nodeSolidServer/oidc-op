@@ -14,7 +14,6 @@ const IDToken = require('../../src/IDToken')
 
 const provider = {
   host: {
-    logout: () => {},
     defaults: {
       post_logout_redirect_uri: '/goodbye'
     }
@@ -43,18 +42,6 @@ const reqWithParams = HttpMocks.createRequest({
 })
 
 describe('RPInitiatedLogoutRequest', () => {
-  describe('handle()', () => {
-    it('should invoke injected host.logout', () => {
-      let res = HttpMocks.createResponse()
-      let logoutSpy = sinon.stub(provider.host, 'logout').resolves()
-
-      return RPInitiatedLogoutRequest.handle(reqNoParams, res, provider)
-        .then(() => {
-          expect(logoutSpy).to.have.been.called()
-        })
-    })
-  })
-
   describe('constructor()', () => {
     it('should parse the incoming request params', () => {
       let res = {}
@@ -71,7 +58,7 @@ describe('RPInitiatedLogoutRequest', () => {
     it('should validate that `post_logout_redirect_uri` has been registered')
   })
 
-  describe('redirectToGoodbye()', () => {
+  describe('redirectToPostLogoutUri()', () => {
     it('should redirect to RP if logout uri provided', () => {
       let res = HttpMocks.createResponse()
       let req = HttpMocks.createRequest({
@@ -83,7 +70,7 @@ describe('RPInitiatedLogoutRequest', () => {
       })
       let request = new RPInitiatedLogoutRequest(req, res, provider)
 
-      request.redirectToGoodbye()
+      request.redirectToPostLogoutUri()
 
       expect(res.statusCode).to.equal(302)
       expect(res._getRedirectUrl())
@@ -94,7 +81,7 @@ describe('RPInitiatedLogoutRequest', () => {
       let res = HttpMocks.createResponse()
       let request = new RPInitiatedLogoutRequest(reqNoParams, res, provider)
 
-      request.redirectToGoodbye()
+      request.redirectToPostLogoutUri()
 
       expect(res.statusCode).to.equal(302)
       expect(res._getRedirectUrl())
