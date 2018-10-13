@@ -935,23 +935,31 @@ describe('TokenRequest', () => {
     })
 
     describe('with valid credentials', () => {
-      let request, promise
+      let client, request, promise
 
       before(() => {
+        sinon.stub(TokenRequest.prototype, 'badRequest')
         sinon.stub(TokenRequest.prototype, 'unauthorized')
 
+        let client_id = 'uuid'
         let req = {
           method: 'POST',
           body: {
-            client_id: 'uuid',
+            client_id: client_id,
             client_secret: 'secret'
           }
         }
 
+        client = { client_id, client_secret: 'secret' }
+
         let res = {}
         let provider = {
           host: {},
-          backend: { get: () => Promise.resolve({ client_secret: 'secret' }) }
+          backend: {
+            get: (collection, id) => {
+              return Promise.resolve(collection == 'clients' && id == client_id ? client : undefined)
+            }
+          }
         }
 
         request = new TokenRequest(req, res, provider)
@@ -959,6 +967,7 @@ describe('TokenRequest', () => {
       })
 
       after(() => {
+        TokenRequest.prototype.badRequest.restore()
         TokenRequest.prototype.unauthorized.restore()
       })
 
@@ -966,8 +975,13 @@ describe('TokenRequest', () => {
         promise.should.be.instanceof(Promise)
       })
 
-      it('should resolve request', () => {
-        promise.then(result => result.should.equal(request))
+      it('should resolve request with client added', () => {
+        request.badRequest.should.not.have.been.called()
+        request.unauthorized.should.not.have.been.called()
+        return promise.then(result => {
+          result.client.should.equal(client)
+          result.should.equal(request)
+        })
       })
     })
   })

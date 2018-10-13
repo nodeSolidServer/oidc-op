@@ -274,7 +274,7 @@ class TokenRequest extends BaseRequest {
     }
 
     return new Promise((resolve, reject) => {
-      provider.backend.get(id).then(client => {
+      provider.backend.get('clients', id).then(client => {
 
         // UNKNOWN CLIENT
         if (!client) {
@@ -291,6 +291,8 @@ class TokenRequest extends BaseRequest {
             error_description: 'Mismatching client secret'
           })
         }
+
+        request.client = client
 
         resolve(request)
       })
