@@ -1,6 +1,6 @@
 {
   "name": "@solid/oidc-op",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "OpenID Connect Provider",
   "main": "src/index.js",
   "directories": {
