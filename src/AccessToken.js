@@ -77,6 +77,14 @@ class AccessToken extends JWT {
     let key = keys.token.signing[alg].privateKey
     let kid = keys.token.signing[alg].publicJwk.kid
 
+    if (!Array.isArray(aud)) {
+      aud = [ aud ]
+    }
+
+    if (!aud.includes(sub)) {
+      aud.push(sub)
+    }
+
     let header = { alg, kid }
     let payload = { iss, aud, sub, exp, iat, jti, scope }
 

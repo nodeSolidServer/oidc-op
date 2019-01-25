@@ -143,7 +143,9 @@ describe('AccessToken', () => {
       let token = AccessToken.issue(provider, options)
 
       expect(token.payload.iss).to.equal(provider.issuer)
-      expect(token.payload.aud).to.equal('client123')
+      expect(Array.isArray(token.payload.aud)).to.be.true
+      expect(token.payload.aud.includes('client123')).to.be.true
+      expect(token.payload.aud.includes(token.payload.sub)).to.be.true
       expect(token.payload.sub).to.equal('user123')
       expect(token.payload.scope).to.equal('openid profile')
     })
