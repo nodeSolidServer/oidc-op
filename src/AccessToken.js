@@ -89,7 +89,7 @@ class AccessToken extends JWT {
    * issue
    */
   static issueForRequest (request, response) {
-    let { params, code, provider, client, subject } = request
+    let { params, code, provider, client, subject, defaultRsUri } = request
 
     let alg = client['access_token_signed_response_alg'] || DEFAULT_SIG_ALGORITHM
     let jti = AccessToken.random(8)
@@ -98,14 +98,14 @@ class AccessToken extends JWT {
 
     // authentication request
     if (!code) {
-      aud = client['client_id']
+      aud = defaultRsUri || client['client_id']
       sub = subject['_id']
       max = parseInt(params['max_age']) || client['default_max_age'] || DEFAULT_MAX_AGE
       scope = request.scope
 
     // token request
     } else {
-      aud = code.aud
+      aud = defaultRsUri || code.aud
       sub = code.sub
       max = parseInt(code['max']) || client['default_max_age'] || DEFAULT_MAX_AGE
       scope = code.scope

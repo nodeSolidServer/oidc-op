@@ -28,6 +28,8 @@ const AccessToken = require(path.join(cwd, 'src', 'AccessToken'))
 const IDToken = require(path.join(cwd, 'src', 'IDToken'))
 const Provider = require(path.join(cwd, 'src', 'Provider'))
 
+const defaultRsUri = 'https://rs.example.com'
+
 /**
  * Tests
  */
@@ -52,6 +54,7 @@ describe('AuthenticationRequest', () => {
     provider = new Provider(storedConfig)
 
     provider.inject({ host })
+    provider.inject({ serverUri: defaultRsUri })
     provider.inject({ backend: new MemoryStore() })
 
     return provider.initializeKeyChain(provider.keys)
@@ -124,6 +127,12 @@ describe('AuthenticationRequest', () => {
       req = HttpMocks.createRequest({ method: 'GET', query: params })
       let request = new AuthenticationRequest(req, res, provider)
       request.responseTypes.should.eql([ 'code', 'id_token', 'token' ])
+    })
+
+    it('should set "defaultRsUri" from provider', () => {
+      let req = { method: 'GET', query: params }
+      let request = new AuthenticationRequest(req, res, provider)
+      request.defaultRsUri.should.eql(defaultRsUri)
     })
 
     it('should set "responseMode" default', () => {

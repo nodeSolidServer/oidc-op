@@ -30,6 +30,7 @@ const MemoryStore = require('../backends/MemoryStore')
  */
 describe('DynamicRegistrationRequest', () => {
   const providerUri = 'https://example.com'
+  const defaultRsUri = 'https://rs.example.com'
   let req, res, provider
   let request
 
@@ -40,6 +41,7 @@ describe('DynamicRegistrationRequest', () => {
 
     provider = new Provider(storedConfig)
 
+    provider.inject({ serverUri: defaultRsUri })
     provider.inject({ backend: new MemoryStore() })
 
     return provider.initializeKeyChain(provider.keys)
