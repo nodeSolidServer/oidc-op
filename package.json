@@ -46,7 +46,6 @@
     "@trust/json-document": "^0.1.4",
     "@trust/webcrypto": "0.9.2",
     "base64url": "^3.0.0",
-    "pem-jwk": "^1.5.1",
     "qs": "^6.5.2",
     "whatwg-url": "^6.5.0"
   },
