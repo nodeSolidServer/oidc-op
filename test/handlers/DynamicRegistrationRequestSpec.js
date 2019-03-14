@@ -29,7 +29,6 @@ const MemoryStore = require('../backends/MemoryStore')
  * Tests
  */
 describe('DynamicRegistrationRequest', () => {
-  const providerUri = 'https://example.com'
   const defaultRsUri = 'https://rs.example.com'
   let req, res, provider
   let request

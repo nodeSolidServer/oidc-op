@@ -98,14 +98,20 @@ class AccessToken extends JWT {
 
     // authentication request
     if (!code) {
-      aud = defaultRsUri || client['client_id']
+      aud =  [ client['client_id'] ]
+      if (defaultRsUri && defaultRsUri !== client['client_id']) {
+        aud.push(defaultRsUri)
+      }
       sub = subject['_id']
       max = parseInt(params['max_age']) || client['default_max_age'] || DEFAULT_MAX_AGE
       scope = request.scope
 
     // token request
     } else {
-      aud = defaultRsUri || code.aud
+      aud = [ code.aud ]
+      if (defaultRsUri && defaultRsUri !== code.aud) {
+        aud.push(defaultRsUri)
+      }
       sub = code.sub
       max = parseInt(code['max']) || client['default_max_age'] || DEFAULT_MAX_AGE
       scope = code.scope
