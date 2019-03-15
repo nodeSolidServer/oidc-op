@@ -67,31 +67,31 @@ describe('AccessToken', () => {
     let request, response
     let params = {}
     let scope = ['token']
+    const defaultRsUri = 'https://rs.example.com'
 
     describe('authentication requests', () => {
       let code
 
       beforeEach(() => {
-        request = { params, code, provider, client, subject, scope }
+        request = { params, code, provider, client, subject, scope, defaultRsUri }
         response = {}
       })
 
-      it('should issue an access token', () => {
-        return AccessToken.issueForRequest(request, response)
-          .then(res => {
-            expect(res['token_type']).to.equal('Bearer')
-            expect(res['expires_in']).to.equal(1209600)
+      it('should issue an access token', async () => {
+        const res = await AccessToken.issueForRequest(request, response)
 
-            return JWT.decode(res['access_token'])
-          })
-          .then(token => {
-            expect(token.type).to.equal('JWS')
-            expect(token.header.alg).to.equal('RS256')
-            expect(token.payload.iss).to.equal(providerUri)
-            expect(token.payload.sub).to.equal('user123')
-            expect(token.payload.jti).to.exist()
-            expect(token.payload.scope).to.eql(['token'])
-          })
+        expect(res['token_type']).to.equal('Bearer')
+        expect(res['expires_in']).to.equal(1209600)
+
+        const token = await JWT.decode(res['access_token'])
+
+        expect(token.type).to.equal('JWS')
+        expect(token.header.alg).to.equal('RS256')
+        expect(token.payload.iss).to.equal(providerUri)
+        expect(token.payload.sub).to.equal('user123')
+        expect(token.payload.jti).to.exist()
+        expect(token.payload.scope).to.eql(['token'])
+        expect(token.payload.aud).to.eql(['client123', 'https://rs.example.com'])
       })
     })
 

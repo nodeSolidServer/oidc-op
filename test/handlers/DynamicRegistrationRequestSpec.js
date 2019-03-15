@@ -29,7 +29,7 @@ const MemoryStore = require('../backends/MemoryStore')
  * Tests
  */
 describe('DynamicRegistrationRequest', () => {
-  const providerUri = 'https://example.com'
+  const defaultRsUri = 'https://rs.example.com'
   let req, res, provider
   let request
 
@@ -40,6 +40,7 @@ describe('DynamicRegistrationRequest', () => {
 
     provider = new Provider(storedConfig)
 
+    provider.inject({ serverUri: defaultRsUri })
     provider.inject({ backend: new MemoryStore() })
 
     return provider.initializeKeyChain(provider.keys)
@@ -180,8 +181,8 @@ describe('DynamicRegistrationRequest', () => {
 
       let headers = res._getHeaders()
 
-      expect(headers['Cache-Control']).to.equal('no-store')
-      expect(headers['Pragma']).to.equal('no-cache')
+      expect(headers['cache-control']).to.equal('no-store')
+      expect(headers['pragma']).to.equal('no-cache')
     })
 
     it('responds with a client registration object', () => {

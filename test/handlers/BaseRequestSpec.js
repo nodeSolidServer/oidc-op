@@ -47,7 +47,7 @@ describe('BaseRequest', () => {
       req = { method: 'GET', query: params }
       res = {}
       host = {}
-      provider = { host }
+      provider = { host, serverUri: 'https://rs.example.com' }
     })
 
     it('should set "req"', () => {
@@ -63,6 +63,11 @@ describe('BaseRequest', () => {
     it('should set "provider"', () => {
       let request = new BaseRequest(req, res, provider)
       request.provider.should.equal(provider)
+    })
+
+    it('should set "defaultRsUri"', () => {
+      let request = new BaseRequest(req, res, provider)
+      request.defaultRsUri.should.equal('https://rs.example.com')
     })
 
     it('should set "host"', () => {

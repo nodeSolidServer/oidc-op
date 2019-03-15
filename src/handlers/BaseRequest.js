@@ -49,6 +49,7 @@ class BaseRequest {
     this.req = req
     this.res = res
     this.provider = provider
+    this.defaultRsUri = provider.serverUri
     this.host = provider.host
   }
 

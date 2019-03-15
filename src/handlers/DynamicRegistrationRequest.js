@@ -139,7 +139,6 @@ class DynamicRegistrationRequest extends BaseRequest {
    * respond
    *
    * @param {DynamicRegistrationRequest} request
-   * @returns {Promise}
    */
   respond (request) {
     let {client, compact, provider, res} = request
