@@ -43,8 +43,8 @@
   },
   "homepage": "https://github.com/solid/oidc-op#README",
   "dependencies": {
-    "@solid/jose": "solid/jose#swap-webcrypto",
-    "@solid/keychain": "solid/keychain#swap-webcrypto",
+    "@solid/jose": "solid/jose#remove-json-document",
+    "@solid/keychain": "^0.2.0",
     "base64url": "^3.0.1",
     "isomorphic-webcrypto": "^2.3.2",
     "qs": "^6.9.0",
