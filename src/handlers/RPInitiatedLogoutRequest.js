@@ -90,7 +90,7 @@ class RPInitiatedLogoutRequest extends BaseRequest {
 
     // Importing the provider keys creates a CryptoKey property on each.
     // A CryptoKey object is required for verifying the ID token.
-    let jwks = await JWKSet.importKeys(provider.keys.jwks);
+    const jwks = await JWKSet.importKeys(provider.keys.jwks);
     // Resolve which signing key should be used to verify the ID token.
     if (!decodedHint.resolveKeys(jwks)) {
       request.badRequest({
@@ -223,7 +223,7 @@ class RPInitiatedLogoutRequest extends BaseRequest {
 
   clearUserSession () {
     let session = this.req.session
-    session.cookie.expires = new Date(Date.now()) 
+    session.cookie.expires = new Date(Date.now())
     session.userId = null
     session.subject = null
   }

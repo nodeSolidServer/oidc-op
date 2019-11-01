@@ -27,23 +27,6 @@ like Express.
 - Back-Channel Logout
 - OAuth 2.0 Client Credentials Grant
 - Proof Key for Code Exchange by OAuth Clients (PKCE)
-- Authorization Cross Domain Code (ACDC)
-
-## Dependencies
-
-This package is a work in progress, dependent on other ongoing projects. Code
-contained herein will be completed when the following dependencies are ready to
-release:
-
-- [solid/jose](https://github.com/solid/jose)
-- [anvilresearch/webcrypto](https://github.com/anvilresearch/webcrypto)
-- [anvilresearch/json-document](https://github.com/anvilresearch/json-document)
-
-## Tentative Scope
-
-- Account Chooser 1.0
-- Native Applications Agent Core 1.0
-- Native Applications API Bindings 1.0
 
 ## Out of Scope
 
@@ -68,4 +51,7 @@ handing.
 
 ## MIT License
 
+[The MIT License](LICENSE.md)
+
 Copyright (c) 2016 [Anvil Research, Inc.](http://anvil.io)
+Copyright (c) 2017-2019 The Solid Project

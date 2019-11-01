@@ -4,8 +4,8 @@
  * Dependencies
  * @ignore
  */
-const {JWT} = require('@solid/jose')
-const crypto = require('@trust/webcrypto')
+const { JWT } = require('@solid/jose')
+const { random } = require('../crypto')
 const url = require('url')
 const BaseRequest = require('./BaseRequest')
 const Client = require('../Client')
@@ -23,7 +23,7 @@ class DynamicRegistrationRequest extends BaseRequest {
    * @param {Provider} provider
    */
   static handle (req, res, provider) {
-    let request = new DynamicRegistrationRequest(req, res, provider)
+    const request = new DynamicRegistrationRequest(req, res, provider)
 
     return Promise.resolve(request)
       .then(request.validate)
@@ -40,7 +40,7 @@ class DynamicRegistrationRequest extends BaseRequest {
    * @returns {DynamicRegistrationRequest}
    */
   validate (request) {
-    let registration = request.req.body
+    const registration = request.req.body
 
     if (!registration) {
       return request.badRequest({
@@ -76,13 +76,14 @@ class DynamicRegistrationRequest extends BaseRequest {
      */
 
     // initialize and validate a client
-    let client = new Client(registration)
-    let validation = client.validate()
+    const client = new Client(registration)
+    const validation = client.validate()
 
     if (!validation.valid) {
       return request.badRequest({
         error: 'invalid_request',
-        error_description: 'Client validation error: ' + JSON.stringify(validation)
+        error_description: 'Client validation error: ' +
+          JSON.stringify(validation.error)
       })
     }
 
@@ -97,9 +98,9 @@ class DynamicRegistrationRequest extends BaseRequest {
    * @returns {Promise}
    */
   register (request) {
-    let backend = request.provider.backend
-    let client = request.client
-    let id = client['client_id']
+    const backend = request.provider.backend
+    const client = request.client
+    const id = client['client_id']
 
     return backend.put('clients', id, client).then(client => request)
   }
@@ -111,12 +112,12 @@ class DynamicRegistrationRequest extends BaseRequest {
    * @returns {Promise}
    */
   token (request) {
-    let {provider, client} = request
-    let {issuer, keys} = provider
-    let alg = client['id_token_signed_response_alg']
+    const {provider, client} = request
+    const {issuer, keys} = provider
+    const alg = client['id_token_signed_response_alg']
 
     // create a registration access token
-    let jwt = new JWT({
+    const jwt = new JWT({
       header: {
         alg
       },
@@ -141,12 +142,12 @@ class DynamicRegistrationRequest extends BaseRequest {
    * @param {DynamicRegistrationRequest} request
    */
   respond (request) {
-    let {client, compact, provider, res} = request
+    const {client, compact, provider, res} = request
 
-    let clientUri = url.resolve(provider.issuer,
+    const clientUri = url.resolve(provider.issuer,
       '/register/' + encodeURIComponent(client.client_id))
 
-    let response = Object.assign({}, client, {
+    const response = Object.assign({}, client, {
       registration_access_token: compact,
       registration_client_uri: clientUri,
       client_id_issued_at: Math.floor(Date.now() / 1000)
@@ -170,8 +171,7 @@ class DynamicRegistrationRequest extends BaseRequest {
    * @returns {string}
    */
   identifier () {
-    let value = crypto.getRandomValues(new Uint8Array(16))
-    return Buffer.from(value).toString('hex')
+    return random(16)
   }
 
   /**
@@ -180,8 +180,7 @@ class DynamicRegistrationRequest extends BaseRequest {
    * @returns {string}
    */
   secret () {
-    let value = crypto.getRandomValues(new Uint8Array(16))
-    return Buffer.from(value).toString('hex')
+    return random(16)
   }
 
   /**
@@ -191,7 +190,7 @@ class DynamicRegistrationRequest extends BaseRequest {
    * @returns {Boolean}
    */
   implicit (registration) {
-    let responseTypes = registration['response_types']
+    const responseTypes = registration['response_types']
 
     return !!(responseTypes
       && responseTypes.length === 1

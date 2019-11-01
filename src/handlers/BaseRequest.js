@@ -4,7 +4,6 @@
  * Dependencies
  * @ignore
  */
-const crypto = require('@trust/webcrypto')
 const { URL, URLSearchParams } = require('whatwg-url')
 
 const HandledError = require('../errors/HandledError')
@@ -290,17 +289,6 @@ class BaseRequest {
     // TODO: Debug logging here
     let {res} = this
     res.status(500).send('Internal Server Error')
-  }
-
-
-
-  /**
-   * TODO
-   * This doesn't belong here.
-   */
-  random (byteLen) {
-    let value = crypto.getRandomValues(new Uint8Array(byteLen))
-    return Buffer.from(value).toString('hex')
   }
 }
 

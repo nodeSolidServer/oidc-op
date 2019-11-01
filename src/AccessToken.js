@@ -1,9 +1,8 @@
 /**
  * Local dependencies
  */
-const {JWT} = require('@solid/jose')
-const crypto = require('@trust/webcrypto')
-const AccessTokenSchema = require('./schemas/AccessTokenSchema')
+const { JWT } = require('@solid/jose')
+const { random } = require('./crypto')
 
 const DEFAULT_MAX_AGE = 1209600  // Default Access token expiration, in seconds
 const DEFAULT_SIG_ALGORITHM = 'RS256'
@@ -12,14 +11,6 @@ const DEFAULT_SIG_ALGORITHM = 'RS256'
  * AccessToken
  */
 class AccessToken extends JWT {
-
-  /**
-   * Schema
-   */
-  static get schema () {
-    return AccessTokenSchema
-  }
-
   /**
    * issue
    *
@@ -62,25 +53,25 @@ class AccessToken extends JWT {
    * @returns {JWT} Access token (JWT instance)
    */
   static issue (provider, options) {
-    let { issuer, keys } = provider
+    const { issuer, keys } = provider
 
-    let { aud, sub, scope } = options
+    const { aud, sub, scope } = options
 
-    let alg = options.alg || DEFAULT_SIG_ALGORITHM
-    let jti = options.jti || AccessToken.random(8)
-    let iat = options.iat || Math.floor(Date.now() / 1000)
-    let max = options.max || DEFAULT_MAX_AGE
+    const alg = options.alg || DEFAULT_SIG_ALGORITHM
+    const jti = options.jti || random(8)
+    const iat = options.iat || Math.floor(Date.now() / 1000)
+    const max = options.max || DEFAULT_MAX_AGE
 
-    let exp = iat + max  // token expiration
+    const exp = iat + max  // token expiration
 
-    let iss = issuer
-    let key = keys.token.signing[alg].privateKey
-    let kid = keys.token.signing[alg].publicJwk.kid
+    const iss = issuer
+    const key = keys.token.signing[alg].privateKey
+    const kid = keys.token.signing[alg].publicJwk.kid
 
-    let header = { alg, kid }
-    let payload = { iss, aud, sub, exp, iat, jti, scope }
+    const header = { alg, kid }
+    const payload = { iss, aud, sub, exp, iat, jti, scope }
 
-    let jwt = new AccessToken({ header, payload, key })
+    const jwt = new AccessToken({ header, payload, key })
 
     return jwt
   }
@@ -89,11 +80,11 @@ class AccessToken extends JWT {
    * issue
    */
   static issueForRequest (request, response) {
-    let { params, code, provider, client, subject, defaultRsUri } = request
+    const { params, code, provider, client, subject, defaultRsUri } = request
 
-    let alg = client['access_token_signed_response_alg'] || DEFAULT_SIG_ALGORITHM
-    let jti = AccessToken.random(8)
-    let iat = Math.floor(Date.now() / 1000)
+    const alg = client['access_token_signed_response_alg'] || DEFAULT_SIG_ALGORITHM
+    const jti = random(8)
+    const iat = Math.floor(Date.now() / 1000)
     let aud, sub, max, scope
 
     // authentication request
@@ -117,7 +108,7 @@ class AccessToken extends JWT {
       scope = code.scope
     }
 
-    let options = { aud, sub, scope, alg, jti, iat, max }
+    const options = { aud, sub, scope, alg, jti, iat, max }
 
     let header, payload
 
@@ -149,7 +140,7 @@ class AccessToken extends JWT {
         let refresh
 
         if (code || responseTypes.includes('code')) {
-          refresh = AccessToken.random(16)
+          refresh = random(16)
         }
 
         if (refresh) {
@@ -160,11 +151,6 @@ class AccessToken extends JWT {
 
       // resolve the response
       .then(() => response)
-  }
-
-  static random (byteLen) {
-    let value = crypto.getRandomValues(new Uint8Array(byteLen))
-    return Buffer.from(value).toString('hex')
   }
 }
 

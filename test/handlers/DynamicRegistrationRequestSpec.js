@@ -62,40 +62,35 @@ describe('DynamicRegistrationRequest', () => {
   })
 
   describe('validate', () => {
-    it('should throw an error on missing registration', done => {
+    it('should throw an error on missing registration', () => {
       request.req.body = undefined
 
+      let thrownError
+
       try {
         request.validate(request)
-      } catch (err) {
-        expect(err.error_description).to.equal('Missing registration request body')
-        expect(request.badRequest).to.have.been.called()
-        done()
+      } catch (error) {
+        thrownError = error
       }
+
+      expect(thrownError.error_description)
+        .to.equal('Missing registration request body')
+      expect(request.badRequest).to.have.been.called()
     })
 
-    it('should throw an error on missing redirect_uris', done => {
+    it('should throw an error on missing redirect_uris', () => {
       request.req.body.redirect_uris = undefined
 
-      try {
-        request.validate(request)
-      } catch (err) {
-        expect(err.error_description).to.equal('Missing redirect_uris parameter')
-        expect(request.badRequest).to.have.been.called()
-        done()
-      }
-    })
-
-    it('should throw a validation error when client does not pass validation', done => {
-      request.req.body.application_type = 123  // app type must be a string
+      let thrownError
 
       try {
         request.validate(request)
-      } catch (err) {
-        expect(err.error_description).to.match(/Client validation error/)
-        expect(request.badRequest).to.have.been.called()
-        done()
+      } catch (error) {
+        thrownError = error
       }
+      expect(thrownError.error_description)
+        .to.equal('Missing redirect_uris parameter')
+      expect(request.badRequest).to.have.been.called()
     })
 
     it('should generate a client_id if one is not provided', () => {

@@ -1009,20 +1009,17 @@ describe('AuthenticationRequest', () => {
       request.client = { client_id: 'client123' }
       request.subject = { '_id': 'user1' }
       request.responseTypes = ['code']
-      request.random = sinon.stub().returns('rand0m')
     })
 
-    it('generates an authorization code and sets it on the response', () => {
-      return request.includeAuthorizationCode(authResponse)
-        .then(result => {
-          expect(result.code).to.equal('rand0m')
-        })
+    it('generates an authorization code and sets it on the response', async () => {
+      const result = await request.includeAuthorizationCode(authResponse)
+      expect(result).to.have.property('code')
     })
 
     it('stores the corresponding AuthorizationCode instance', () => {
       return request.includeAuthorizationCode(authResponse)
         .then(result => {
-          expect(provider.backend.put).to.have.been.calledWith('codes', 'rand0m')
+          expect(provider.backend.put).to.have.been.calledWith('codes')
         })
     })
   })

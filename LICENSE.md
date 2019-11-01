@@ -1,6 +1,7 @@
 The MIT License (MIT)
 
-Copyright (c) 2016 - present [Anvil Research, Inc.](http://anvil.io)
+Copyright (c) 2016 [Anvil Research, Inc.](http://anvil.io)
+Copyright (c) 2017-2019 The Solid Project
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

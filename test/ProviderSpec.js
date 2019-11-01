@@ -21,7 +21,6 @@ let expect = chai.expect
  * Code under test
  */
 const Provider = require(path.join(cwd, 'src', 'Provider'))
-const ProviderSchema = require(path.join(cwd, 'src', 'schemas', 'ProviderSchema'))
 const AuthenticationRequest = require(path.join(cwd, 'src', 'handlers', 'AuthenticationRequest'))
 const OpenIDConfigurationRequest = require(path.join(cwd, 'src', 'handlers', 'OpenIDConfigurationRequest'))
 const DynamicRegistrationRequest = require(path.join(cwd, 'src', 'handlers', 'DynamicRegistrationRequest'))
@@ -29,37 +28,20 @@ const JWKSetRequest = require(path.join(cwd, 'src', 'handlers', 'JWKSetRequest')
 const TokenRequest = require(path.join(cwd, 'src', 'handlers', 'TokenRequest'))
 const UserInfoRequest = require(path.join(cwd, 'src', 'handlers', 'UserInfoRequest'))
 const RPInitiatedLogoutRequest = require(path.join(cwd, 'src', 'handlers', 'RPInitiatedLogoutRequest'))
-const {JSONSchema} = require('@trust/json-document')
 const KeyChain = require('@solid/keychain')
 
 /**
  * Tests
  */
 describe('OpenID Connect Provider', () => {
-
-  /**
-   * Schema
-   */
-  describe('schema', () => {
-    it('should reference the OpenID Connect Provider Schema', () => {
-      Provider.schema.should.equal(ProviderSchema)
-    })
-
-    it('should be an instance of JSONSchema', () => {
-      ProviderSchema.should.be.an.instanceof(JSONSchema)
-    })
-  })
-
   /**
    * Constructor
    */
   describe('constructor', () => {
     it('should initialize default endpoints', () => {
-      sinon.spy(Provider, 'initializeEndpoints')
+      const op = new Provider({ issuer: 'https://example.com' })
 
-      new Provider({ issuer: 'https://example.com' })
-
-      expect(Provider.initializeEndpoints).to.have.been.called()
+      expect(op.jwks_uri = 'https://example.com/jwks')
     })
   })
 
@@ -76,12 +58,17 @@ describe('OpenID Connect Provider', () => {
       Provider.prototype.initializeKeyChain.restore()
     })
 
-    it('should throw an error on invalid provider data', done => {
-      Provider.from({})
-        .catch(err => {
-          expect(err.message).to.match(/Invalid provider data/)
-          done()
-        })
+    it('should throw an error on invalid provider data', async () => {
+      let thrownError
+
+      try {
+        await Provider.from({})
+      } catch (error) {
+        thrownError = error
+      }
+
+      expect(thrownError).to.exist()
+      expect(thrownError.message).to.match(/OpenID Provider must have an issuer/)
     })
 
     it('should initialize the provider keychain', () => {
@@ -133,7 +120,7 @@ describe('OpenID Connect Provider', () => {
       req = {}
       res = {}
       sinon.stub(AuthenticationRequest, 'handle')
-      provider = new Provider({}, {}, {})
+      provider = new Provider({ issuer: 'https://example.com' })
       provider.authorize(req, res, provider)
     })
 
@@ -157,7 +144,7 @@ describe('OpenID Connect Provider', () => {
       req = {}
       res = {}
       sinon.stub(OpenIDConfigurationRequest, 'handle')
-      provider = new Provider({}, {}, {})
+      provider = new Provider({ issuer: 'https://example.com' })
       provider.discover(req, res, provider)
     })
 
@@ -181,7 +168,7 @@ describe('OpenID Connect Provider', () => {
       req = {}
       res = {}
       sinon.stub(JWKSetRequest, 'handle')
-      provider = new Provider({}, {}, {})
+      provider = new Provider({ issuer: 'https://example.com' })
       provider.jwks(req, res, provider)
     })
 
@@ -205,7 +192,7 @@ describe('OpenID Connect Provider', () => {
       req = {}
       res = {}
       sinon.stub(DynamicRegistrationRequest, 'handle')
-      provider = new Provider({}, {}, {})
+      provider = new Provider({ issuer: 'https://example.com' })
       provider.register(req, res, provider)
     })
 
@@ -229,7 +216,7 @@ describe('OpenID Connect Provider', () => {
       req = {}
       res = {}
       sinon.stub(TokenRequest, 'handle')
-      provider = new Provider({}, {}, {})
+      provider = new Provider({ issuer: 'https://example.com' })
       provider.token(req, res, provider)
     })
 
@@ -253,7 +240,7 @@ describe('OpenID Connect Provider', () => {
       req = {}
       res = {}
       sinon.stub(UserInfoRequest, 'handle')
-      provider = new Provider({}, {}, {})
+      provider = new Provider({ issuer: 'https://example.com' })
       provider.userinfo(req, res, provider)
     })
 
@@ -274,7 +261,7 @@ describe('OpenID Connect Provider', () => {
       req = {}
       res = {}
       sinon.stub(RPInitiatedLogoutRequest, 'handle')
-      provider = new Provider({}, {}, {})
+      provider = new Provider({ issuer: 'https://example.com' })
       provider.logout(req, res, provider)
     })
 
