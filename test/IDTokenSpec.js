@@ -21,7 +21,7 @@ let expect = chai.expect
  */
 const Provider = require('../src/Provider')
 const IDToken = require('../src/IDToken')
-const IDTokenSchema = require('../src/schemas/IDTokenSchema')
+const { random } = require('../src/crypto')
 
 /**
  * Tests
@@ -38,15 +38,6 @@ describe('IDToken', () => {
     provider = new Provider(storedConfig)
 
     return provider.initializeKeyChain(provider.keys)
-  })
-
-  /**
-   * Schema
-   */
-  describe('schema', () => {
-    it('should reference the IDToken Schema', () => {
-      IDToken.schema.should.equal(IDTokenSchema)
-    })
   })
 
   describe('issueForRequest()', () => {
@@ -157,7 +148,7 @@ describe('IDToken', () => {
     it('should issue an id token with passed in values', () => {
       options.alg = 'RS512'
 
-      let randomId = IDToken.random(8)
+      let randomId = random(8)
       options.jti = randomId
 
       let now = Math.floor(Date.now() / 1000)

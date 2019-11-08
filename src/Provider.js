@@ -4,9 +4,7 @@
  * Dependencies
  */
 const url = require('url')
-const {JSONDocument} = require('@trust/json-document')
 const KeyChain = require('@solid/keychain')
-const ProviderSchema = require('./schemas/ProviderSchema')
 const AuthenticationRequest = require('./handlers/AuthenticationRequest')
 const OpenIDConfigurationRequest = require('./handlers/OpenIDConfigurationRequest')
 const DynamicRegistrationRequest = require('./handlers/DynamicRegistrationRequest')
@@ -15,20 +13,100 @@ const TokenRequest = require('./handlers/TokenRequest')
 const UserInfoRequest = require('./handlers/UserInfoRequest')
 const RPInitiatedLogoutRequest = require('./handlers/RPInitiatedLogoutRequest')
 
+const DEFAULT_RESPONSE_TYPES_SUPPORTED = [
+  'code',
+  'code token',
+  'code id_token',
+  'id_token',
+  'id_token token',
+  'code id_token token',
+  'none'
+]
+const DEFAULT_RESPONSE_MODES_SUPPORTED = [
+  'query',
+  'fragment'
+]
+const DEFAULT_GRANT_TYPES_SUPPORTED = [
+  'authorization_code',
+  'implicit',
+  'refresh_token',
+  'client_credentials'
+]
+const DEFAULT_SUBJECT_TYPES_SUPPORTED = ['public']
+
 /**
  * OpenID Connect Provider
  */
-class Provider extends JSONDocument {
+class Provider {
 
   /**
    * constructor
    */
-  constructor (data, options) {
-    //assert(issuer, 'OpenID Provider must have an issuer')
+  constructor (data = {}) {
+    const { issuer } = data
+    if (!issuer) {
+      throw new Error('OpenID Provider must have an issuer.')
+    }
 
-    data = Provider.initializeEndpoints(data, options)
+    this.issuer = data.issuer
+    this.jwks_uri = data.jwks_uri
+    this.scopes_supported = data.scopes_supported
+    this.response_types_supported = data.response_types_supported ||
+      DEFAULT_RESPONSE_TYPES_SUPPORTED
+    this.response_modes_supported = data.response_modes_supported ||
+      DEFAULT_RESPONSE_MODES_SUPPORTED
+    this.grant_types_supported = data.grant_types_supported ||
+      DEFAULT_GRANT_TYPES_SUPPORTED
+    this.subject_types_supported = data.subject_types_supported ||
+      DEFAULT_SUBJECT_TYPES_SUPPORTED
+    this.id_token_signing_alg_values_supported =
+      data.id_token_signing_alg_values_supported || ['RS256']
+    this.id_token_encryption_alg_values_supported =
+      data.id_token_encryption_alg_values_supported
+    this.id_token_encryption_enc_values_supported =
+      data.id_token_encryption_enc_values_supported
+    this.userinfo_signing_alg_values_supported =
+      data.userinfo_signing_alg_values_supported
+    this.userinfo_encryption_alg_values_supported =
+      data.userinfo_encryption_alg_values_supported
+    this.userinfo_encryption_enc_values_supported =
+      data.userinfo_encryption_enc_values_supported
+    this.request_object_signing_alg_values_supported =
+      data.request_object_signing_alg_values_supported
+    this.request_object_encryption_alg_values_supported =
+      data.request_object_encryption_alg_values_supported
+    this.request_object_encryption_enc_values_supported =
+      data.request_object_encryption_enc_values_supported
+    this.token_endpoint_auth_methods_supported =
+      data.token_endpoint_auth_methods_supported || 'client_secret_basic'
+    this.token_endpoint_auth_signing_alg_values_supported =
+      data.token_endpoint_auth_signing_alg_values_supported || ['RS256']
+    this.display_values_supported = data.display_values_supported || []
+    this.claim_types_supported = data.claim_types_supported || ['normal']
+    this.claims_supported = data.claims_supported || []
+    this.service_documentation = data.service_documentation
+    this.claims_locales_supported = data.claims_locales_supported
+    this.ui_locales_supported = data.ui_locales_supported
+    this.claims_parameter_supported = data.claims_parameter_supported || false
+    this.request_parameter_supported = data.request_parameter_supported
+    if (this.request_parameter_supported === undefined) {
+      this.request_parameter_supported = true
+    }
+    this.request_uri_parameter_supported = data.request_uri_parameter_supported || false
+    this.require_request_uri_registration = data.require_request_uri_registration || false
+    this.op_policy_uri = data.op_policy_uri
+    this.op_tos_uri = data.op_tos_uri
+    this.check_session_iframe = data.check_session_iframe
+    this.end_session_endpoint = data.end_session_endpoint
 
-    super(data, options)
+    this.authorization_endpoint = data['authorization_endpoint'] || url.resolve(issuer, '/authorize')
+    this.token_endpoint = data['token_endpoint'] || url.resolve(issuer, '/token')
+    this.userinfo_endpoint = data['userinfo_endpoint'] || url.resolve(issuer, '/userinfo')
+    this.jwks_uri = data['jwks_uri'] || url.resolve(issuer, '/jwks')
+    this.registration_endpoint = data['registration_endpoint'] || url.resolve(issuer, '/register')
+    this.check_session_iframe = data['check_session_iframe'] || url.resolve(issuer, '/session')
+    this.end_session_endpoint = data['end_session_endpoint'] || url.resolve(issuer, '/logout')
+
   }
 
   /**
@@ -44,40 +122,12 @@ class Provider extends JSONDocument {
    *
    * @returns {Promise<Provider>}
    */
-  static from (data) {
-    let provider = new Provider(data)
+  static async from (data) {
+    const provider = new Provider(data)
 
-    let validation = provider.validate()
+    await provider.initializeKeyChain(provider.keys)
 
-    // schema validation
-    if (!validation.valid) {
-      return Promise.reject(new Error('Invalid provider data'))
-    }
-
-    return provider.initializeKeyChain(provider.keys)
-      .then(() => provider)
-  }
-
-  /**
-   * initializeEndpoints
-   *
-   * @param data
-   * @param options
-   *
-   * @returns {Object} Provider data object
-   */
-  static initializeEndpoints(data, options) {
-    let issuer = data.issuer || ''
-
-    data['authorization_endpoint'] = data['authorization_endpoint'] || url.resolve(issuer, '/authorize')
-    data['token_endpoint'] = data['token_endpoint'] || url.resolve(issuer, '/token')
-    data['userinfo_endpoint'] = data['userinfo_endpoint'] || url.resolve(issuer, '/userinfo')
-    data['jwks_uri'] = data['jwks_uri'] || url.resolve(issuer, '/jwks')
-    data['registration_endpoint'] = data['registration_endpoint'] || url.resolve(issuer, '/register')
-    data['check_session_iframe'] = data['check_session_iframe'] || url.resolve(issuer, '/session')
-    data['end_session_endpoint'] = data['end_session_endpoint'] || url.resolve(issuer, '/logout')
-
-    return data
+    return provider
   }
 
   /**
@@ -98,9 +148,9 @@ class Provider extends JSONDocument {
    * generateKeyChain
    */
   generateKeyChain () {
-    let modulusLength = 2048
+    const modulusLength = 2048
 
-    let descriptor = {
+    const descriptor = {
       id_token: {
         signing: {
           RS256: { alg: 'RS256', modulusLength },
@@ -156,7 +206,7 @@ class Provider extends JSONDocument {
    * openidConfiguration
    */
   get openidConfiguration () {
-    return JSON.stringify(this, Object.keys(ProviderSchema.properties))
+    return JSON.stringify(this)
   }
 
   /**
@@ -167,20 +217,11 @@ class Provider extends JSONDocument {
   }
 
   /**
-   * Schema
-   *
-   * @returns {JSONSchema}
-   */
-  static get schema () {
-    return ProviderSchema
-  }
-
-  /**
    * inject
    */
   inject (properties) {
     Object.keys(properties).forEach(key => {
-      let value = properties[key]
+      const value = properties[key]
 
       Object.defineProperty(this, key, {
         enumerable: false,

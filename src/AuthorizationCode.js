@@ -1,19 +1,28 @@
-/**
- * Dependencies
- */
-const {JSONDocument} = require('@trust/json-document')
-const {AuthorizationCodeSchema} = require('./schemas')
+'use strict'
 
 /**
  * AuthorizationCode
  */
-class AuthorizationCode extends JSONDocument {
-
+class AuthorizationCode {
   /**
-   * schema
+   * @param code {string}
+   * @param sub {string}
+   * @param aud {string}
+   * @param redirect_uri {string}
+   * @param exp {number}
+   * @param max {number}
+   * @param scope {string|Array<string>}
+   * @param nonce {string}
    */
-  static get schema () {
-    return AuthorizationCodeSchema
+  constructor ({ code, sub, aud, redirect_uri, exp, max, scope, nonce } = {}) {
+    this.code = code
+    this.sub = sub
+    this.aud = aud
+    this.redirect_uri = redirect_uri
+    this.exp = exp
+    this.max = max
+    this.scope = scope
+    this.nonce = nonce
   }
 }
 

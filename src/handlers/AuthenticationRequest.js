@@ -9,6 +9,7 @@ const AccessToken = require('../AccessToken')
 const AuthorizationCode = require('../AuthorizationCode')
 const IDToken = require('../IDToken')
 const { JWT, JWK, JWKSet } = require('@solid/jose')
+const { random } = require('../crypto')
 const { URL } = require('whatwg-url')
 
 /**
@@ -572,7 +573,7 @@ class AuthenticationRequest extends BaseRequest {
     let {backend} = provider
 
     if (responseTypes.includes('code')) {
-      let code = this.random(16)
+      let code = random(16)
       let sub = subject['_id']
       let aud = client['client_id']
       let iat = Math.floor(Date.now() / 1000)

@@ -7,6 +7,7 @@ const chai = require('chai')
 const fs = require('fs')
 const path = require('path')
 const { JWT } = require('@solid/jose')
+const { random } = require('../src/crypto')
 
 /**
  * Assertions
@@ -21,7 +22,6 @@ let expect = chai.expect
  */
 const Provider = require('../src/Provider')
 const AccessToken = require('../src/AccessToken')
-const AccessTokenSchema = require('../src/schemas/AccessTokenSchema')
 const MemoryStore = require('./backends/MemoryStore')
 
 /**
@@ -41,24 +41,6 @@ describe('AccessToken', () => {
     provider.inject({ backend: new MemoryStore() })
 
     return provider.initializeKeyChain(provider.keys)
-  })
-
-  /**
-   * Schema
-   */
-  describe('schema', () => {
-    it('should reference the AccessToken Schema', () => {
-      AccessToken.schema.should.equal(AccessTokenSchema)
-    })
-  })
-
-  describe('random', () => {
-    it('should return a random string', () => {
-      let result = AccessToken.random(8)  // 8 bytes / 16 chars
-
-      expect(typeof result).to.equal('string')
-      expect(result.length).to.equal(16)
-    })
   })
 
   describe('issueForRequest()', () => {
@@ -151,7 +133,7 @@ describe('AccessToken', () => {
     it('should issue an access token with passed in values', () => {
       options.alg = 'RS512'
 
-      let randomId = AccessToken.random(8)
+      let randomId = random(8)
       options.jti = randomId
 
       let now = Math.floor(Date.now() / 1000)

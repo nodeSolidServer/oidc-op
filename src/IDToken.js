@@ -1,10 +1,8 @@
 /**
  * Local dependencies
  */
-const crypto = require('@trust/webcrypto')
-const base64url = require('base64url')
-const {JWT} = require('@solid/jose')
-const IDTokenSchema = require('./schemas/IDTokenSchema')
+const { JWT } = require('@solid/jose')
+const { hashClaim, random } = require('./crypto')
 
 const DEFAULT_MAX_AGE = 1209600  // Default ID token expiration, in seconds
 const DEFAULT_SIG_ALGORITHM = 'RS256'
@@ -13,14 +11,6 @@ const DEFAULT_SIG_ALGORITHM = 'RS256'
  * IDToken
  */
 class IDToken extends JWT {
-
-  /**
-   * Schema
-   */
-  static get schema () {
-    return IDTokenSchema
-  }
-
   /**
    * issue
    *
@@ -54,7 +44,7 @@ class IDToken extends JWT {
     let { aud, azp, sub, nonce, at_hash, c_hash, cnf } = options
 
     let alg = options.alg || DEFAULT_SIG_ALGORITHM
-    let jti = options.jti || IDToken.random(8)
+    let jti = options.jti || random(8)
     let iat = options.iat || Math.floor(Date.now() / 1000)
     let max = options.max || DEFAULT_MAX_AGE
 
@@ -83,7 +73,7 @@ class IDToken extends JWT {
     let {params, code, provider, client, subject} = request
 
     let alg = client['id_token_signed_response_alg'] || DEFAULT_SIG_ALGORITHM
-    let jti = IDToken.random(8)
+    let jti = random(8)
     let iat = Math.floor(Date.now() / 1000)
     let aud, azp, sub, max, nonce
 
@@ -108,8 +98,8 @@ class IDToken extends JWT {
 
     // generate hashes
     return Promise.all([
-      IDToken.hashClaim(response['access_token'], len),
-      IDToken.hashClaim(response['code'], len)
+      hashClaim(response['access_token'], len),
+      hashClaim(response['code'], len)
     ])
 
       // build the id_token
@@ -135,35 +125,6 @@ class IDToken extends JWT {
 
       // resolve the response
       .then(() => response)
-  }
-
-  /**
-   * hashClaim
-   *
-   * @description
-   * Create a hash for at_hash or c_hash claim
-   *
-   * @param {string} token
-   * @param {string} hashLength
-   *
-   * @returns {Promise<string>}
-   */
-  static hashClaim (value, hashLength) {
-    if (value) {
-      let alg = { name: `SHA-${hashLength}`}
-      let octets = new Buffer(value, 'ascii')
-
-      return crypto.subtle.digest(alg, new Uint8Array(octets)).then(digest => {
-        let hash = Buffer.from(digest)
-        let half = hash.slice(0, hash.byteLength / 2)
-        return base64url(half)
-      })
-    }
-  }
-
-  static random (byteLen) {
-    let value = crypto.getRandomValues(new Uint8Array(byteLen))
-    return Buffer.from(value).toString('hex')
   }
 }
 

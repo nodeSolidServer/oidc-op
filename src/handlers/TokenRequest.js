@@ -22,7 +22,7 @@ class TokenRequest extends BaseRequest {
    * @param {Provider} provider
    */
   static handle (req, res, provider) {
-    let request = new TokenRequest(req, res, provider)
+    const request = new TokenRequest(req, res, provider)
 
     Promise
       .resolve(request)
@@ -49,7 +49,7 @@ class TokenRequest extends BaseRequest {
    * @return {string}
    */
   static getGrantType (request) {
-    let {params} = request
+    const {params} = request
     return params.grant_type
   }
 
@@ -60,7 +60,7 @@ class TokenRequest extends BaseRequest {
    * @returns {Promise<TokenRequest>}
    */
   validate (request) {
-    let {params} = request
+    const {params} = request
 
     // MISSING GRANT TYPE
     if (!params.grant_type) {
@@ -110,9 +110,9 @@ class TokenRequest extends BaseRequest {
    * @returns {Boolean}
    */
   supportedGrantType () {
-    let {params,provider} = this
-    let supportedGrantTypes = provider.grant_types_supported
-    let requestedGrantType = params.grant_type
+    const { params, provider } = this
+    const supportedGrantTypes = provider.grant_types_supported
+    const requestedGrantType = params.grant_type
 
     return supportedGrantTypes.includes(requestedGrantType)
   }
@@ -125,7 +125,7 @@ class TokenRequest extends BaseRequest {
    */
   authenticateClient (request) {
     let method
-    let {req} = request
+    const { req } = request
 
     // Use HTTP Basic Authentication Method
     if (req.headers && req.headers.authorization) {
@@ -147,7 +147,7 @@ class TokenRequest extends BaseRequest {
 
     // Use Client JWT Authentication Method
     if (req.body && req.body.client_assertion_type) {
-      var type = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer'
+      const type = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer'
 
       // Fail if multiple authentication methods are attempted
       if (method) {
@@ -198,13 +198,13 @@ class TokenRequest extends BaseRequest {
    * @returns {Promise<TokenRequest>}
    */
   clientSecretBasic (request) {
-    let {req:{headers},provider} = request
-    let authorization = headers.authorization.split(' ')
-    let scheme = authorization[0]
-    let credentials = new Buffer(authorization[1], 'base64')
+    const { req: { headers }, provider } = request
+    const authorization = headers.authorization.split(' ')
+    const scheme = authorization[0]
+    const credentials = new Buffer(authorization[1], 'base64')
       .toString('ascii')
       .split(':')
-    let [id, secret] = credentials
+    const [id, secret] = credentials
 
    // MALFORMED CREDENTIALS
     if (credentials.length !== 2) {
@@ -263,7 +263,7 @@ class TokenRequest extends BaseRequest {
    * @returns {Promise<TokenRequest>}
    */
   clientSecretPost (request) {
-    let {params: {client_id: id, client_secret: secret}, provider} = request
+    const { params: { client_id: id, client_secret: secret }, provider } = request
 
     // MISSING CREDENTIALS
     if (!id || !secret) {
@@ -307,9 +307,9 @@ class TokenRequest extends BaseRequest {
    * @returns {Promise<TokenRequest>}
    */
   clientSecretJWT (request) {
-    let { req: { body: { client_assertion: jwt } }, provider} = request
-    let payloadB64u = jwt.split('.')[1]
-    let payload = JSON.parse(base64url.decode(payloadB64u))
+    const { req: { body: { client_assertion: jwt } }, provider} = request
+    const payloadB64u = jwt.split('.')[1]
+    const payload = JSON.parse(base64url.decode(payloadB64u))
 
     if (!payload || !payload.sub) {
       return request.badRequest({
@@ -366,7 +366,7 @@ class TokenRequest extends BaseRequest {
    * @returns {Promise<Null>}
    */
   grant (request) {
-    let {grantType} = request
+    const { grantType } = request
 
     if (grantType === 'authorization_code') {
       return request.authorizationCodeGrant(request)
@@ -434,7 +434,7 @@ class TokenRequest extends BaseRequest {
    * @returns {Promise<Null>}
    */
   clientCredentialsGrant (request) {
-    let {res, client: { default_max_age: expires } } = request
+    const { res, client: { default_max_age: expires } } = request
 
     return AccessToken.issueForRequest(request, res).then(token => {
       let response = {}
@@ -460,7 +460,7 @@ class TokenRequest extends BaseRequest {
    * @returns {TokenRequest}
    */
   verifyAuthorizationCode (request) {
-    let {params, client, provider, grantType} = request
+    const { params, client, provider, grantType } = request
 
     if (grantType === 'authorization_code') {
       return provider.backend.get('codes', params.code).then(authorizationCode => {
