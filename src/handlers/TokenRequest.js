@@ -9,6 +9,9 @@ const AccessToken = require('../AccessToken')
 const AuthorizationCode = require('../AuthorizationCode')
 const IDToken = require('../IDToken')
 
+const LEGACY_POP = "legacyPop"
+const DPOP = "dpop"
+
 /**
  * TokenRequest
  */
@@ -27,6 +30,7 @@ class TokenRequest extends BaseRequest {
     Promise
       .resolve(request)
       .then(request.validate)
+      .then(request.extractDpopHeader)
       .then(request.authenticateClient)
       .then(request.verifyAuthorizationCode)
       .then(request.grant)
@@ -40,6 +44,7 @@ class TokenRequest extends BaseRequest {
     super(req, res, provider)
     this.params = TokenRequest.getParams(this)
     this.grantType = TokenRequest.getGrantType(this)
+    this.tokenType = TokenRequest.getTokenType(this)
   }
 
   /**
@@ -51,6 +56,15 @@ class TokenRequest extends BaseRequest {
   static getGrantType (request) {
     const {params} = request
     return params.grant_type
+  }
+
+  static getTokenType (request) {
+    const { req } = request;
+    if (req.headers && req.headers.dpop) {
+      return DPOP;
+    } else {
+      return LEGACY_POP;
+    }
   }
 
   /**
@@ -174,6 +188,10 @@ class TokenRequest extends BaseRequest {
       }
 
       method = 'clientSecretJWT'
+    }
+
+    if (req.body && req.body.client_id) {
+      method = 'clientId'
     }
 
     // Missing authentication parameters
@@ -349,6 +367,22 @@ class TokenRequest extends BaseRequest {
       })
   }
 
+  clientId (request) {
+    const { req: { body: { client_id: clientId } }, provider} = request
+    return provider.backend.get('clients', clientId)
+      .then(client => {
+        if (!client) {
+          return request.badRequest({
+            error: 'unauthorized_client',
+            error_description: 'Unknown client'
+          })
+        }
+        request.client = client
+
+        return request
+      })
+  }
+
   /**
    * Private Key JWT Authentication
    */
@@ -358,6 +392,14 @@ class TokenRequest extends BaseRequest {
    * None Authentication
    */
   // none () {}
+
+  extractDpopHeader (request) {
+    if (request.tokenType === DPOP) {
+      const decodedDpop = JWT.decode(req.headers.dpop);
+      return request;
+    }
+    return request;
+  }
 
   /**
    * Grant

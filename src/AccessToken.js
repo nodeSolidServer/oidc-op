@@ -68,6 +68,7 @@ class AccessToken extends JWT {
     const key = keys.token.signing[alg].privateKey
     const kid = keys.token.signing[alg].publicJwk.kid
 
+    
     const header = { alg, kid }
     const payload = { iss, aud, sub, exp, iat, jti, scope }
 
@@ -108,7 +109,9 @@ class AccessToken extends JWT {
       scope = code.scope
     }
 
-    const options = { aud, sub, scope, alg, jti, iat, max }
+    const tokenType = request.tokenType;
+
+    const options = { aud, sub, scope, alg, jti, iat, max, tokenType }
 
     let header, payload
 

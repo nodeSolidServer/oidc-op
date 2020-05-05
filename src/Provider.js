@@ -17,6 +17,7 @@ const DEFAULT_RESPONSE_TYPES_SUPPORTED = [
   'code',
   'code token',
   'code id_token',
+  'id_token code',
   'id_token',
   'id_token token',
   'code id_token token',
@@ -33,6 +34,8 @@ const DEFAULT_GRANT_TYPES_SUPPORTED = [
   'client_credentials'
 ]
 const DEFAULT_SUBJECT_TYPES_SUPPORTED = ['public']
+
+const DEFAULT_TOKEN_TYPES_SUPPORTED = ['legacyPop', 'dpop']
 
 /**
  * OpenID Connect Provider
@@ -53,6 +56,8 @@ class Provider {
     this.scopes_supported = data.scopes_supported
     this.response_types_supported = data.response_types_supported ||
       DEFAULT_RESPONSE_TYPES_SUPPORTED
+    this.token_types_supported = data.token_types_supported ||
+      DEFAULT_TOKEN_TYPES_SUPPORTED
     this.response_modes_supported = data.response_modes_supported ||
       DEFAULT_RESPONSE_MODES_SUPPORTED
     this.grant_types_supported = data.grant_types_supported ||
