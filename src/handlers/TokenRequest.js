@@ -6,8 +6,12 @@
  */
 const BaseRequest = require('./BaseRequest')
 const AccessToken = require('../AccessToken')
+const DpopAccessToken = require('../DpopAccessToken')
 const AuthorizationCode = require('../AuthorizationCode')
 const IDToken = require('../IDToken')
+const DpopIDToken = require('../DpopIDToken')
+const JWT = require('jsonwebtoken');
+const jwkToPem = require('jwk-to-pem')
 
 const LEGACY_POP = "legacyPop"
 const DPOP = "dpop"
@@ -393,10 +397,30 @@ class TokenRequest extends BaseRequest {
    */
   // none () {}
 
-  extractDpopHeader (request) {
+  async extractDpopHeader (request) {
+    const { req, provider } = request
     if (request.tokenType === DPOP) {
-      const decodedDpop = JWT.decode(req.headers.dpop);
-      return request;
+      try {
+        // decode token
+        const decodedToken = await JWT.decode(req.headers.dpop, { json: true, complete: true })
+        // verify the token contains the correct public key
+        await JWT.verify(req.headers.dpop, jwkToPem(decodedToken.header.jwk))
+        // verify htu and htm
+        const requiredHtu = `${provider.issuer}${req.path}`
+        if (decodedToken.payload.htu !== requiredHtu) {
+          throw new Error(`htu ${decodedToken.payload.htu} does not match ${requiredHtu}`)
+        }
+        if (decodedToken.payload.htm !== req.method) {
+          throw new Error(`htm ${decodedToken.payload.htm} does not match ${req.method}`)
+        }
+        request.dpopJwk = decodedToken.header.jwk
+      } catch (err) {
+        request.error({
+          error: 'invalid_dpop_header',
+          error_description: `The dpop header was invalid: ${err.message}`
+        })
+      }
+      
     }
     return request;
   }
@@ -448,14 +472,22 @@ class TokenRequest extends BaseRequest {
    * includeAccessToken
    */
   includeAccessToken (response) {
-    return AccessToken.issueForRequest(this, response)
+    if (this.tokenType === LEGACY_POP) {
+      return AccessToken.issueForRequest(this, response)
+    } else if (this.tokenType === DPOP) {
+      return DpopAccessToken.issueForRequest(this, response)
+    }
   }
 
   /**
    * includeIDToken
    */
   includeIDToken (response) {
-    return IDToken.issueForRequest(this, response)
+    if (this.tokenType === LEGACY_POP) {
+      return IDToken.issueForRequest(this, response)
+    } else if (this.tokenType === DPOP) {
+      return DpopIDToken.issueForRequest(this, response)
+    }
   }
 
   /**

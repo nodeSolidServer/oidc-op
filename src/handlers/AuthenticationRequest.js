@@ -55,7 +55,6 @@ class AuthenticationRequest extends BaseRequest {
   }
 
   handleLegacyPop (request, host) {
-    console.log("Handling legacy Pop")
     return Promise
       .resolve(request)
       .then(request.loadClient)
@@ -69,7 +68,6 @@ class AuthenticationRequest extends BaseRequest {
   }
 
   handleDpop (request, host) {
-    console.log("Handling dpop")
     request.responseMode = '?'
     return Promise
       .resolve(request)
