@@ -531,7 +531,13 @@ describe('TokenRequest', () => {
 
         let res = {}
         let host = {}
-        let provider = { host, grant_types_supported: ['client_credentials'] }
+        let provider = {
+          host,
+          grant_types_supported: ['client_credentials'],
+          backend: {
+            get: async () => {}
+          }
+        }
 
         request = new TokenRequest(req, res, provider)
         request.authenticateClient(request)

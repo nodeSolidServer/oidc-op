@@ -194,7 +194,7 @@ class TokenRequest extends BaseRequest {
       method = 'clientSecretJWT'
     }
 
-    if (req.body && req.body.client_id) {
+    if (req.body && req.body.client_id && !req.body.client_secret) {
       method = 'clientId'
     }
 

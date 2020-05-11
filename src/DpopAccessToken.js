@@ -3,6 +3,7 @@
  */
 const { JWT } = require('@solid/jose')
 const { random } = require('./crypto')
+const { jwkThumbprintByEncoding } = require('jwk-thumbprint')
 
 const DEFAULT_MAX_AGE = 1209600  // Default Access token expiration, in seconds
 const DEFAULT_SIG_ALGORITHM = 'RS256'
@@ -109,7 +110,9 @@ class DpopAccessToken extends JWT {
       scope = code.scope
     }
 
-    const cnf = request.dpopJwk;
+    const cnf = {
+      jkt: jwkThumbprintByEncoding(request.dpopJwk, "SHA-256", 'base64url')
+    }
 
     const options = { aud, sub, scope, alg, jti, iat, max, cnf }
 
