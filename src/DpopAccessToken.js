@@ -3,14 +3,15 @@
  */
 const { JWT } = require('@solid/jose')
 const { random } = require('./crypto')
+const { jwkThumbprintByEncoding } = require('jwk-thumbprint')
 
 const DEFAULT_MAX_AGE = 1209600  // Default Access token expiration, in seconds
 const DEFAULT_SIG_ALGORITHM = 'RS256'
 
 /**
- * AccessToken
+ * DpopAccessToken
  */
-class AccessToken extends JWT {
+class DpopAccessToken extends JWT {
   /**
    * issue
    *
@@ -23,7 +24,7 @@ class AccessToken extends JWT {
    *   // and a particular user in mind (for the `sub`ject claim)
    *
    *   let options = { aud: rpClientId, sub: userId, scope: 'openid profile' }
-   *   let token = AccessToken.issue(provider, options)
+   *   let token = DpopAccessToken.issue(provider, options)
 
    *   return token.encode()
    *     .then(compactToken => {
@@ -55,7 +56,7 @@ class AccessToken extends JWT {
   static issue (provider, options) {
     const { issuer, keys } = provider
 
-    const { aud, sub, scope } = options
+    const { aud, sub, cnf } = options
 
     const alg = options.alg || DEFAULT_SIG_ALGORITHM
     const jti = options.jti || random(8)
@@ -70,9 +71,9 @@ class AccessToken extends JWT {
 
     
     const header = { alg, kid }
-    const payload = { iss, aud, sub, exp, iat, jti, scope }
+    const payload = { iss, aud, sub, exp, iat, jti, cnf }
 
-    const jwt = new AccessToken({ header, payload, key })
+    const jwt = new DpopAccessToken({ header, payload, key })
 
     return jwt
   }
@@ -90,7 +91,7 @@ class AccessToken extends JWT {
 
     // authentication request
     if (!code) {
-      aud =  [ client['client_id'] ]
+      aud = client['client_id']
       if (defaultRsUri && defaultRsUri !== client['client_id']) {
         aud.push(defaultRsUri)
       }
@@ -109,32 +110,32 @@ class AccessToken extends JWT {
       scope = code.scope
     }
 
-    const options = { aud, sub, scope, alg, jti, iat, max }
+    const cnf = {
+      jkt: jwkThumbprintByEncoding(request.dpopJwk, "SHA-256", 'base64url')
+    }
+
+    const options = { aud, sub, scope, alg, jti, iat, max, cnf }
 
     let header, payload
 
     return Promise.resolve()
-      .then(() => AccessToken.issue(provider, options))
-
+      .then(() => DpopAccessToken.issue(provider, options))
       .then(jwt => {
         header = jwt.header
         payload = jwt.payload
 
         return jwt.encode()
       })
-
       // set the response properties
       .then(compact => {
         response['access_token'] = compact
         response['token_type'] = 'Bearer'
         response['expires_in'] = max
       })
-
       // store access token by "jti" claim
       .then(() => {
         return provider.backend.put('tokens', `${jti}`, { header, payload })
       })
-
       // store access token by "refresh_token", if applicable
       .then(() => {
         let responseTypes = request.responseTypes || []
@@ -149,16 +150,15 @@ class AccessToken extends JWT {
           return provider.backend.put('refresh', `${refresh}`, { header, payload })
         }
       })
-
       // resolve the response
       .then(() => response)
   }
 }
 
-AccessToken.DEFAULT_MAX_AGE = DEFAULT_MAX_AGE
-AccessToken.DEFAULT_SIG_ALGORITHM = DEFAULT_SIG_ALGORITHM
+DpopAccessToken.DEFAULT_MAX_AGE = DEFAULT_MAX_AGE
+DpopAccessToken.DEFAULT_SIG_ALGORITHM = DEFAULT_SIG_ALGORITHM
 
 /**
  * Export
  */
-module.exports = AccessToken
+module.exports = DpopAccessToken

@@ -12,6 +12,9 @@ const { JWT, JWK, JWKSet } = require('@solid/jose')
 const { random } = require('../crypto')
 const { URL } = require('whatwg-url')
 
+const LEGACY_POP = "legacyPop"
+const DPOP = "dpop"
+
 /**
  * AuthenticationRequest
  */
@@ -25,14 +28,52 @@ class AuthenticationRequest extends BaseRequest {
    * @param {Provider} provider
    */
   static handle (req, res, provider) {
-    let {host} = provider
+    let {host, token_types_supported} = provider
     let request = new AuthenticationRequest(req, res, provider)
 
     return Promise
       .resolve(request)
+      .then(request.getTokenType)
+      .then((request) => {
+        if (
+          request.tokenType === LEGACY_POP &&
+          token_types_supported.includes(LEGACY_POP)
+        ) {
+          return request.handleLegacyPop(request, host)
+        } else if (
+          request.tokenType === DPOP &&
+          token_types_supported.includes(DPOP)
+        ) {
+          return request.handleDpop(request, host)
+        } else {
+          return request.badRequest({
+            error: 'invalid_request',
+            error_description: `This server does not allow a token of type ${request.tokenType}`,
+          })
+        }
+      })
+  }
+
+  handleLegacyPop (request, host) {
+    return Promise
+      .resolve(request)
       .then(request.loadClient)
       .then(request.decodeRequestParam)
-      .then(request.validate)
+      .then(request.validateCommon)
+      .then(request.validateLegacyPop)
+      .then(host.authenticate)
+      .then(host.obtainConsent)
+      .then(request.authorize)
+      .catch(err => request.error(err))
+  }
+
+  handleDpop (request, host) {
+    request.responseMode = '?'
+    return Promise
+      .resolve(request)
+      .then(request.loadClient)
+      .then(request.validateCommon)
+      .then(request.validateDpop)
       .then(host.authenticate)
       .then(host.obtainConsent)
       .then(request.authorize)
@@ -51,6 +92,15 @@ class AuthenticationRequest extends BaseRequest {
     this.params = AuthenticationRequest.getParams(this)
     this.responseTypes = AuthenticationRequest.getResponseTypes(this)
     this.responseMode = AuthenticationRequest.getResponseMode(this)
+  }
+
+  getTokenType (request) {
+    if (request.params.request) {
+      request.tokenType = LEGACY_POP
+    } else {
+      request.tokenType = DPOP
+    }
+    return request;
   }
 
   /**
@@ -353,7 +403,7 @@ class AuthenticationRequest extends BaseRequest {
    *
    * @returns {AuthenticationRequest}
    */
-  validate (request) {
+  validateCommon (request) {
     const { params, client } = request
 
     // CLIENT ID IS REQUIRED
@@ -412,14 +462,6 @@ class AuthenticationRequest extends BaseRequest {
       })
     }
 
-    // NONCE MAY BE REQUIRED
-    if (!request.requiredNonceProvided()) {
-      return request.redirect({
-        error: 'invalid_request',
-        error_description: 'Missing nonce'
-      })
-    }
-
     // RESPONSE TYPE MUST BE SUPPORTED
     // TODO is this something the client can configure too?
     if (!request.supportedResponseType()) {
@@ -439,6 +481,22 @@ class AuthenticationRequest extends BaseRequest {
     }
 
     // VALID REQUEST
+    return request
+  }
+
+  validateLegacyPop (request) {
+    // NONCE MAY BE REQUIRED
+    if (!request.requiredNonceProvided()) {
+      return request.redirect({
+        error: 'invalid_request',
+        error_description: 'Missing nonce'
+      })
+    }
+
+    return request
+  }
+
+  validateDpop (request) {
     return request
   }
 

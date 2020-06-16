@@ -6,8 +6,15 @@
  */
 const BaseRequest = require('./BaseRequest')
 const AccessToken = require('../AccessToken')
+const DpopAccessToken = require('../DpopAccessToken')
 const AuthorizationCode = require('../AuthorizationCode')
 const IDToken = require('../IDToken')
+const DpopIDToken = require('../DpopIDToken')
+const JWT = require('jsonwebtoken');
+const jwkToPem = require('jwk-to-pem')
+
+const LEGACY_POP = "legacyPop"
+const DPOP = "dpop"
 
 /**
  * TokenRequest
@@ -27,6 +34,7 @@ class TokenRequest extends BaseRequest {
     Promise
       .resolve(request)
       .then(request.validate)
+      .then(request.extractDpopHeader)
       .then(request.authenticateClient)
       .then(request.verifyAuthorizationCode)
       .then(request.grant)
@@ -40,6 +48,7 @@ class TokenRequest extends BaseRequest {
     super(req, res, provider)
     this.params = TokenRequest.getParams(this)
     this.grantType = TokenRequest.getGrantType(this)
+    this.tokenType = TokenRequest.getTokenType(this)
   }
 
   /**
@@ -51,6 +60,15 @@ class TokenRequest extends BaseRequest {
   static getGrantType (request) {
     const {params} = request
     return params.grant_type
+  }
+
+  static getTokenType (request) {
+    const { req } = request;
+    if (req.headers && req.headers.dpop) {
+      return DPOP;
+    } else {
+      return LEGACY_POP;
+    }
   }
 
   /**
@@ -174,6 +192,10 @@ class TokenRequest extends BaseRequest {
       }
 
       method = 'clientSecretJWT'
+    }
+
+    if (req.body && req.body.client_id && !req.body.client_secret) {
+      method = 'clientId'
     }
 
     // Missing authentication parameters
@@ -349,6 +371,22 @@ class TokenRequest extends BaseRequest {
       })
   }
 
+  clientId (request) {
+    const { req: { body: { client_id: clientId } }, provider} = request
+    return provider.backend.get('clients', clientId)
+      .then(client => {
+        if (!client) {
+          return request.badRequest({
+            error: 'unauthorized_client',
+            error_description: 'Unknown client'
+          })
+        }
+        request.client = client
+
+        return request
+      })
+  }
+
   /**
    * Private Key JWT Authentication
    */
@@ -358,6 +396,34 @@ class TokenRequest extends BaseRequest {
    * None Authentication
    */
   // none () {}
+
+  async extractDpopHeader (request) {
+    const { req, provider } = request
+    if (request.tokenType === DPOP) {
+      try {
+        // decode token
+        const decodedToken = await JWT.decode(req.headers.dpop, { json: true, complete: true })
+        // verify the token contains the correct public key
+        await JWT.verify(req.headers.dpop, jwkToPem(decodedToken.header.jwk))
+        // verify htu and htm
+        const requiredHtu = `${provider.issuer}${req.path}`
+        if (decodedToken.payload.htu !== requiredHtu) {
+          throw new Error(`htu ${decodedToken.payload.htu} does not match ${requiredHtu}`)
+        }
+        if (decodedToken.payload.htm !== req.method) {
+          throw new Error(`htm ${decodedToken.payload.htm} does not match ${req.method}`)
+        }
+        request.dpopJwk = decodedToken.header.jwk
+      } catch (err) {
+        request.error({
+          error: 'invalid_dpop_header',
+          error_description: `The dpop header was invalid: ${err.message}`
+        })
+      }
+      
+    }
+    return request;
+  }
 
   /**
    * Grant
@@ -406,14 +472,22 @@ class TokenRequest extends BaseRequest {
    * includeAccessToken
    */
   includeAccessToken (response) {
-    return AccessToken.issueForRequest(this, response)
+    if (this.tokenType === LEGACY_POP) {
+      return AccessToken.issueForRequest(this, response)
+    } else if (this.tokenType === DPOP) {
+      return DpopAccessToken.issueForRequest(this, response)
+    }
   }
 
   /**
    * includeIDToken
    */
   includeIDToken (response) {
-    return IDToken.issueForRequest(this, response)
+    if (this.tokenType === LEGACY_POP) {
+      return IDToken.issueForRequest(this, response)
+    } else if (this.tokenType === DPOP) {
+      return DpopIDToken.issueForRequest(this, response)
+    }
   }
 
   /**

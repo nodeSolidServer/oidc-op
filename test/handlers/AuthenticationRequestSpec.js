@@ -94,7 +94,7 @@ describe('AuthenticationRequest', () => {
       return AuthenticationRequest.handle(req, res, provider)
         .then(() => {
           let redirectUrl = res._getRedirectUrl()
-          expect(redirectUrl.startsWith('https://example.com/callback#access_token'))
+          expect(redirectUrl.startsWith('https://example.com/callback?access_token'))
             .to.be.true()
 
           expect(res._getStatusCode()).to.equal(302)
@@ -540,7 +540,7 @@ describe('AuthenticationRequest', () => {
         params = { 'redirect_uri': 'https://app.com/callback' }
         req = HttpMocks.createRequest({ method: 'GET', query: params })
         request = new AuthenticationRequest(req, res, provider)
-        request.validate(request)
+        request.validateCommon(request)
       })
 
       after(() => {
@@ -561,7 +561,7 @@ describe('AuthenticationRequest', () => {
         params = { client_id: 'uuid' }
         req = HttpMocks.createRequest({ method: 'GET', query: params })
         request = new AuthenticationRequest(req, res, provider)
-        request.validate(request)
+        request.validateCommon(request)
       })
 
       after(() => {
@@ -584,7 +584,7 @@ describe('AuthenticationRequest', () => {
         provider = { host }
         request = new AuthenticationRequest(req, res, provider)
         request.client = null
-        request.validate(request)
+        request.validateCommon(request)
       })
 
       after(() => {
@@ -608,7 +608,7 @@ describe('AuthenticationRequest', () => {
         provider = { host }
         request = new AuthenticationRequest(req, res, provider)
         request.client = client
-        request.validate(request)
+        request.validateCommon(request)
       })
 
       after(() => {
@@ -636,7 +636,7 @@ describe('AuthenticationRequest', () => {
         provider = { host }
         request = new AuthenticationRequest(req, res, provider)
         request.client = client
-        request.validate(request)
+        request.validateCommon(request)
       })
 
       after(() => {
@@ -668,7 +668,7 @@ describe('AuthenticationRequest', () => {
         provider = { host }
         request = new AuthenticationRequest(req, res, provider)
         request.client = client
-        request.validate(request)
+        request.validateCommon(request)
       })
 
       after(() => {
@@ -701,7 +701,7 @@ describe('AuthenticationRequest', () => {
         provider = { host }
         request = new AuthenticationRequest(req, res, provider)
         request.client = client
-        request.validate(request)
+        request.validateCommon(request)
       })
 
       after(() => {
@@ -731,10 +731,11 @@ describe('AuthenticationRequest', () => {
             'https://example.com/callback'
           ]
         }
-        provider = { host }
+        provider = { host, response_types_supported: ['id_token token'] }
         request = new AuthenticationRequest(req, res, provider)
         request.client = client
-        request.validate(request)
+        request.validateCommon(request)
+        request.validateLegacyPop(request)
       })
 
       after(() => {
@@ -771,7 +772,7 @@ describe('AuthenticationRequest', () => {
         }
         request = new AuthenticationRequest(req, res, provider)
         request.client = client
-        request.validate(request)
+        request.validateCommon(request)
       })
 
       after(() => {
@@ -810,7 +811,7 @@ describe('AuthenticationRequest', () => {
         }
         request = new AuthenticationRequest(req, res, provider)
         request.client = client
-        request.validate(request)
+        request.validateCommon(request)
       })
 
       after(() => {
@@ -848,7 +849,7 @@ describe('AuthenticationRequest', () => {
       })
 
       it('should return the request', () => {
-        let result = request.validate(request)
+        let result = request.validateCommon(request)
         expect(result).to.equal(request)
       })
     })
