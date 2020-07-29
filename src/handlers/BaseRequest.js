@@ -289,7 +289,7 @@ class BaseRequest {
    * Internal Server Error
    */
   internalServerError (err) {
-    debug('Internal Server Error:', err.message)
+    debug('Internal Server Error:', err ? err.message : err)
     let {res} = this
     res.status(500).send('Internal Server Error')
   }
