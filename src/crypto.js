@@ -1,7 +1,12 @@
 'use strict'
 
-const crypto = require('isomorphic-webcrypto').default
+let crypto = require('isomorphic-webcrypto')
 const base64url = require('base64url')
+
+// FIXME:
+if (!crypto.subtle && !!crypto.default) {
+  crypto = crypto.default
+}
 
 /**
  * hashClaim
