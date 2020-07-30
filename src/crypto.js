@@ -1,6 +1,6 @@
 'use strict'
 
-const crypto = require('isomorphic-webcrypto')
+const { crypto } = require('@solid/jose')
 const base64url = require('base64url')
 
 /**

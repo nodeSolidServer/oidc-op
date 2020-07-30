@@ -13,9 +13,9 @@
     "coverage": "nyc --reporter=lcov mocha test",
     "jsdoc": "jsdoc -c jsdoc.json -r",
     "postversion": "git push --follow-tags",
-    "preversion": "mocha test",
+    "preversion": "mocha test --recursive --timeout 20000",
     "standard": "standard",
-    "test": "nyc mocha test && echo 'to view coverage: open coverage/index.html'"
+    "test": "nyc mocha test --recursive --timeout 20000 && echo 'to view coverage: open coverage/index.html'"
   },
   "repository": {
     "type": "git",
@@ -43,27 +43,27 @@
   },
   "homepage": "https://github.com/solid/oidc-op#README",
   "dependencies": {
-    "@solid/jose": "^0.5.0",
-    "@solid/keychain": "^0.2.0",
+    "@solid/jose": "^0.6.0",
+    "@solid/keychain": "^0.3.0",
     "base64url": "^3.0.1",
-    "isomorphic-webcrypto": "^2.3.2",
+    "debug": "^4.1.1",
     "jsonwebtoken": "^8.5.1",
     "jwk-thumbprint": "^0.1.3",
-    "jwk-to-pem": "^2.0.3",
-    "qs": "^6.9.0",
-    "whatwg-url": "^7.1.0"
+    "jwk-to-pem": "^2.0.4",
+    "qs": "^6.9.4",
+    "whatwg-url": "^8.1.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "codecov": "^3.6.1",
+    "codecov": "^3.7.2",
     "dirty-chai": "^2.0.1",
-    "mocha": "^6.2.2",
-    "node-mocks-http": "^1.8.0",
-    "nyc": "^14.1.1",
-    "sinon": "^7.5.0",
-    "sinon-chai": "^3.3.0",
-    "standard": "^14.3.1"
+    "mocha": "^8.0.1",
+    "node-mocks-http": "^1.8.1",
+    "nyc": "^15.1.0",
+    "sinon": "^9.0.2",
+    "sinon-chai": "^3.5.0",
+    "standard": "^14.3.4"
   },
   "nyc": {
     "reporter": [
