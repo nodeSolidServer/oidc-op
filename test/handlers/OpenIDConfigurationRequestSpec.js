@@ -31,6 +31,7 @@ describe('OpenIDConfigurationRequest', () => {
     res = HttpMocks.createResponse()
 
     provider = new Provider({ issuer: providerUri })
+    provider.initializeKeyChain();
   })
 
   it('should respond with the provider configuration in JSON format', () => {
@@ -41,5 +42,15 @@ describe('OpenIDConfigurationRequest', () => {
     let config = JSON.parse(res._getData())
 
     expect(config['authorization_endpoint']).to.equal('https://example.com/authorize')
+  })
+
+  it('should mask properties that are not part of OIDC', () => {
+    OpenIDConfigurationRequest.handle(req, res, provider)
+
+    expect(res._isJSON()).to.be.true()
+
+    let config = JSON.parse(res._getData())
+
+    expect(config['keys']).to.be.undefined()
   })
 })
