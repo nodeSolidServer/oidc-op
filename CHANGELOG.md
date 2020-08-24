@@ -1,3 +1,6 @@
+## v0.9.0
+- Fix to mask properties that should not be part of the OIDC configuration.
+
 ## v0.6.0 - 2019-11-08
 
 ### Changed

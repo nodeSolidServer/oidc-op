@@ -211,7 +211,7 @@ class Provider {
    * openidConfiguration
    */
   get openidConfiguration () {
-    return JSON.stringify(this)
+    return JSON.stringify(this, (key, value) => key !== "keys" ? value : undefined)
   }
 
   /**
