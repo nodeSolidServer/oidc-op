@@ -44,8 +44,8 @@
   },
   "homepage": "https://github.com/solid/oidc-op#README",
   "dependencies": {
-    "@solid/jose": "^0.6.0",
-    "@solid/keychain": "^0.3.0",
+    "@solid/jose": "^0.6.1",
+    "@solid/keychain": "^0.3.1",
     "base64url": "^3.0.1",
     "debug": "^4.2.0",
     "jsonwebtoken": "^8.5.1",
