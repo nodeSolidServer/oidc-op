@@ -69,9 +69,21 @@ class DpopAccessToken extends JWT {
     const key = keys.token.signing[alg].privateKey
     const kid = keys.token.signing[alg].publicJwk.kid
 
-    
+    const webid = sub;
+    const client_id = aud;
+
     const header = { alg, kid }
-    const payload = { iss, aud, sub, exp, iat, jti, cnf }
+    const payload = {
+      iss,
+      aud: "solid",
+      sub,
+      exp,
+      iat,
+      jti,
+      cnf,
+      client_id,
+      webid
+    }
 
     const jwt = new DpopAccessToken({ header, payload, key })
 
@@ -92,19 +104,13 @@ class DpopAccessToken extends JWT {
     // authentication request
     if (!code) {
       aud = client['client_id']
-      if (defaultRsUri && defaultRsUri !== client['client_id']) {
-        aud.push(defaultRsUri)
-      }
       sub = subject['_id']
       max = parseInt(params['max_age']) || client['default_max_age'] || DEFAULT_MAX_AGE
       scope = request.scope
 
     // token request
     } else {
-      aud = [ code.aud ]
-      if (defaultRsUri && defaultRsUri !== code.aud) {
-        aud.push(defaultRsUri)
-      }
+      aud = code.aud
       sub = code.sub
       max = parseInt(code['max']) || client['default_max_age'] || DEFAULT_MAX_AGE
       scope = code.scope
