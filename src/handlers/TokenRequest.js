@@ -522,6 +522,7 @@ class TokenRequest extends BaseRequest {
     }
     return provider.backend.get('refresh', refreshToken).then((refreshTokenInfo) => {
       if (!refreshTokenInfo) {
+        console.log('in here')
         return request.badRequest({
           error: 'invalid_grant',
           error_description: 'Refresh token not found'
