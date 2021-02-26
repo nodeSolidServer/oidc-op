@@ -38,7 +38,10 @@ class TokenRequest extends BaseRequest {
       .then(request.authenticateClient)
       .then(request.verifyAuthorizationCode)
       .then(request.grant)
-      .catch(err => request.error(err))
+      .catch(err => {
+        console.error(err)
+        request.error(err)
+      })
   }
 
   /**
@@ -497,8 +500,39 @@ class TokenRequest extends BaseRequest {
    * @returns {Promise<Object>} Resolves to response object
    */
   refreshTokenGrant (request) {
-    // TODO: I don't think this.tokenResponse is implemented..
-    return AccessToken.refresh(request).then(this.tokenResponse)
+    return Promise.resolve({})
+      .then(() => this.verifyRefreshToken(request))
+      .then(response => request.includeAccessToken(response))
+      .then(response => {
+        request.res.json(response)
+      })
+  }
+
+  /**
+   * Verify the refresh token
+   */
+  verifyRefreshToken(request) {
+    const { params, provider } = request;
+    const refreshToken = params['refresh_token']
+    if (!refreshToken || typeof refreshToken !== 'string') {
+      return request.badRequest({
+        error: 'invalid_grant',
+        error_description: 'Invalid refresh token'
+      })
+    }
+    return provider.backend.get('refresh', refreshToken).then((refreshTokenInfo) => {
+      if (!refreshTokenInfo) {
+        console.log('in here')
+        return request.badRequest({
+          error: 'invalid_grant',
+          error_description: 'Refresh token not found'
+        })
+      }
+      request.subject = {
+        _id: refreshTokenInfo.payload.sub
+      }
+      return {}
+    })
   }
 
   /**

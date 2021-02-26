@@ -140,7 +140,7 @@ class AccessToken extends JWT {
         let responseTypes = request.responseTypes || []
         let refresh
 
-        if (code || responseTypes.includes('code')) {
+        if (code || responseTypes.includes('code') || request.grantType === 'refresh_token') {
           refresh = random(16)
         }
 

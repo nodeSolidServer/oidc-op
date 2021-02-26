@@ -1361,11 +1361,6 @@ describe('TokenRequest', () => {
   })
 
   /**
-   * Include Refresh Token
-   */
-  describe('includeRefreshToken', () => {})
-
-  /**
    * Include ID Token
    */
   describe('includeIDToken', () => {
@@ -1395,6 +1390,67 @@ describe('TokenRequest', () => {
         })
     })
   })
+
+  describe('verifyRefreshToken', () => {
+    it('should be okay with an existing token', () => {
+      const params = {
+        grant_type: 'refresh_token',
+        refresh_token: 'some_token',
+        client_id: 'uuid',
+        client_secret: 's3cr3t'
+      }
+      const req = {
+        method: 'POST',
+        body: params
+      }
+      const res = {}
+      const provider = {
+        host: {},
+        grant_types_supported: ['refresh_token'],
+        backend: {
+          get: async () => { Promise.resolve({"header":{},"payload":{"sub":"https://jackson.localhost:8443/profile/card#me"}}) }
+        }
+      }
+      const request = new TokenRequest(req, res, provider)
+      request.authenticateClient(request)
+      request.verifyRefreshToken(request).then(() => {
+        expect(request.subject._id).to.equal("https://jackson.localhost:8443/profile/card#me")
+      })
+    });
+
+    it('should fail without a refresh token', () => {
+      sinon.stub(TokenRequest.prototype, 'badRequest')
+      const params = {
+        grant_type: 'refresh_token',
+        client_id: 'uuid',
+        client_secret: 's3cr3t'
+      }
+      const req = {
+        method: 'POST',
+        body: params
+      }
+      const res = {
+        json: sinon.stub(),
+        set: sinon.stub(),
+        status: sinon.stub(),
+      }
+      const provider = {
+        host: {},
+        grant_types_supported: ['refresh_token'],
+        backend: {
+          get: async () => {}
+        }
+      }
+      const request = new TokenRequest(req, res, provider)
+      request.authenticateClient(request)
+      request.verifyRefreshToken(request)
+      request.badRequest.should.have.been.calledWith({
+        error: 'invalid_grant',
+        error_description: 'Invalid refresh token'
+      })
+      TokenRequest.prototype.badRequest.restore()
+    });
+  });
 
   /**
    * Include Session State
