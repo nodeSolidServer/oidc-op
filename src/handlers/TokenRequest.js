@@ -503,6 +503,7 @@ class TokenRequest extends BaseRequest {
     return Promise.resolve({})
       .then(() => this.verifyRefreshToken(request))
       .then(response => request.includeAccessToken(response))
+      .then(response => request.includeIDToken(response))
       .then(response => {
         request.res.json(response)
       })
