@@ -83,7 +83,7 @@ class Provider {
     this.request_object_encryption_enc_values_supported =
       data.request_object_encryption_enc_values_supported
     this.token_endpoint_auth_methods_supported =
-      data.token_endpoint_auth_methods_supported || 'client_secret_basic'
+      data.token_endpoint_auth_methods_supported || ['client_secret_basic']
     this.token_endpoint_auth_signing_alg_values_supported =
       data.token_endpoint_auth_signing_alg_values_supported || ['RS256']
     this.display_values_supported = data.display_values_supported || []

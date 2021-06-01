@@ -50,20 +50,20 @@
     "debug": "^4.3.1",
     "jsonwebtoken": "^8.5.1",
     "jwk-thumbprint": "^0.1.4",
-    "jwk-to-pem": "^2.0.4",
-    "qs": "^6.9.6",
-    "whatwg-url": "^8.4.0"
+    "jwk-to-pem": "^2.0.5",
+    "qs": "^6.10.1",
+    "whatwg-url": "^8.5.0"
   },
   "devDependencies": {
-    "chai": "^4.3.3",
+    "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
-    "codecov": "^3.8.1",
+    "codecov": "^3.8.2",
     "dirty-chai": "^2.0.1",
-    "mocha": "^8.3.1",
+    "mocha": "^8.4.0",
     "node-mocks-http": "^1.10.1",
     "nyc": "^15.1.0",
-    "sinon": "^9.2.4",
-    "sinon-chai": "^3.5.0",
+    "sinon": "^11.1.1",
+    "sinon-chai": "^3.7.0",
     "standard": "^16.0.3"
   },
   "nyc": {
