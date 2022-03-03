@@ -35,8 +35,7 @@ const DEFAULT_GRANT_TYPES_SUPPORTED = [
 ]
 const DEFAULT_SCOPES_SUPPORTED = [
   'openid',
-  'offline_access',
-  'webid'
+  'offline_access'
 ]
 const DEFAULT_SUBJECT_TYPES_SUPPORTED = ['public']
 
@@ -58,7 +57,8 @@ class Provider {
 
     this.issuer = data.issuer
     this.jwks_uri = data.jwks_uri
-    this.scopes_supported = data.scopes_supported
+    this.scopes_supported = data.scopes_supported ||
+      DEFAULT_SCOPES_SUPPORTED
     this.response_types_supported = data.response_types_supported ||
       DEFAULT_RESPONSE_TYPES_SUPPORTED
     this.token_types_supported = data.token_types_supported ||
@@ -67,8 +67,6 @@ class Provider {
       DEFAULT_RESPONSE_MODES_SUPPORTED
     this.grant_types_supported = data.grant_types_supported ||
       DEFAULT_GRANT_TYPES_SUPPORTED
-    this.scopes_supported = data.scopes_supported ||
-      DEFAULT_SCOPES_SUPPORTED
     this.subject_types_supported = data.subject_types_supported ||
       DEFAULT_SUBJECT_TYPES_SUPPORTED
     this.id_token_signing_alg_values_supported =
@@ -95,7 +93,6 @@ class Provider {
       data.token_endpoint_auth_signing_alg_values_supported || ['RS256']
     this.display_values_supported = data.display_values_supported || []
     this.claim_types_supported = data.claim_types_supported || ['normal']
-    this.claims_supported = data.claims_supported || ['webid']
     this.service_documentation = data.service_documentation
     this.claims_locales_supported = data.claims_locales_supported
     this.ui_locales_supported = data.ui_locales_supported
