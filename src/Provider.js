@@ -33,6 +33,10 @@ const DEFAULT_GRANT_TYPES_SUPPORTED = [
   'refresh_token',
   'client_credentials'
 ]
+const DEFAULT_SCOPES_SUPPORTED = [
+  'openid',
+  'offline_access'
+]
 const DEFAULT_SUBJECT_TYPES_SUPPORTED = ['public']
 
 const DEFAULT_TOKEN_TYPES_SUPPORTED = ['legacyPop', 'dpop']
@@ -53,7 +57,8 @@ class Provider {
 
     this.issuer = data.issuer
     this.jwks_uri = data.jwks_uri
-    this.scopes_supported = data.scopes_supported
+    this.scopes_supported = data.scopes_supported ||
+      DEFAULT_SCOPES_SUPPORTED
     this.response_types_supported = data.response_types_supported ||
       DEFAULT_RESPONSE_TYPES_SUPPORTED
     this.token_types_supported = data.token_types_supported ||

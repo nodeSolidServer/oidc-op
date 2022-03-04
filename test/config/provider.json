@@ -24,6 +24,10 @@
     "refresh_token",
     "client_credentials"
   ],
+  "scopes_supported": [
+    "openid",
+    "offline_access"
+  ],
   "subject_types_supported": [
     "public"
   ],
