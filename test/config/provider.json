@@ -47,7 +47,7 @@
   "claim_types_supported": [
     "normal"
   ],
-  "claims_supported": "webid",
+  "claims_supported": "",
   "claims_parameter_supported": false,
   "request_parameter_supported": false,
   "request_uri_parameter_supported": true,
