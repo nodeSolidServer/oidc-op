@@ -97,6 +97,7 @@ class Provider {
     this.claims_locales_supported = data.claims_locales_supported
     this.ui_locales_supported = data.ui_locales_supported
     this.claims_parameter_supported = data.claims_parameter_supported || false
+    this.claims_supported = data.claims_supported || []
     this.request_parameter_supported = data.request_parameter_supported
     if (this.request_parameter_supported === undefined) {
       this.request_parameter_supported = true
