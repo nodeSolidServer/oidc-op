@@ -16,7 +16,8 @@
     "postversion": "git push --follow-tags",
     "preversion": "mocha test --recursive --timeout 20000",
     "standard": "standard",
-    "test": "nyc mocha test --recursive --timeout 20000 && echo 'to view coverage: open coverage/index.html'"
+    "test": "nyc mocha test --recursive --timeout 20000 && echo 'to view coverage: open coverage/index.html'",
+    "test-dpop": "nyc mocha test --timeout 20000 -g 'Dpop'"    
   },
   "repository": {
     "type": "git",

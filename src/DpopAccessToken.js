@@ -62,7 +62,7 @@ class DpopAccessToken extends JWT {
     const jti = options.jti || random(8)
     const iat = options.iat || Math.floor(Date.now() / 1000)
     const max = options.max || DEFAULT_MAX_AGE
-
+    const scope = options.scope || ['token'] //idk if this is right
     const exp = iat + max  // token expiration
 
     const iss = issuer
@@ -82,11 +82,12 @@ class DpopAccessToken extends JWT {
       jti,
       cnf,
       client_id,
-      webid
+      webid,
+      scope
     }
 
     const jwt = new DpopAccessToken({ header, payload, key })
-
+    
     return jwt
   }
 
@@ -121,7 +122,7 @@ class DpopAccessToken extends JWT {
     }
 
     const options = { aud, sub, scope, alg, jti, iat, max, cnf }
-
+    // console.debug(options)
     let header, payload
 
     return Promise.resolve()
@@ -135,7 +136,7 @@ class DpopAccessToken extends JWT {
       // set the response properties
       .then(compact => {
         response['access_token'] = compact
-        response['token_type'] = 'Bearer'
+        response['token_type'] = 'DPoP'
         response['expires_in'] = max
       })
       // store access token by "jti" claim
