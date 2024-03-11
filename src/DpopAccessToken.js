@@ -57,7 +57,7 @@ class DpopAccessToken extends JWT {
     const { issuer, keys } = provider
 
     const { aud, sub, cnf } = options
-
+    
     const alg = options.alg || DEFAULT_SIG_ALGORITHM
     const jti = options.jti || random(8)
     const iat = options.iat || Math.floor(Date.now() / 1000)
@@ -122,7 +122,7 @@ class DpopAccessToken extends JWT {
     }
 
     const options = { aud, sub, scope, alg, jti, iat, max, cnf }
-    // console.debug(options)
+    
     let header, payload
 
     return Promise.resolve()

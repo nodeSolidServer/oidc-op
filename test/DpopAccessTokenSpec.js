@@ -23,8 +23,6 @@ let expect = chai.expect
 const Provider = require('../src/Provider')
 const DpopAccessToken = require('../src/DpopAccessToken')
 const MemoryStore = require('./backends/MemoryStore');
-const { jwkThumbprint } = require('jwk-thumbprint');
-const { randomUUID } = require('crypto');
 
 /**
  * Dpop tests
@@ -55,14 +53,13 @@ describe('DpopAccessToken', () => {
             beforeEach(() => {
                 request = { params, code, provider, client, subject, scope, defaultResourceServerUri }
                 
-                request.dpopJwk = crypto.createPublicKey({
-                    key: {
-                        "kty": "RSA",
-                        "kid": "IlOPtWXUcpiPttmr-K7DmehzeRM",
-                        "n": "qv2XCvfUfW0bG547B1xieE0-GN8xLuCdzGcIWsYMP-fn1vR2ptR7XOp_kW-etlxSDT2MVyzdXbG9eQCgeBk-Ajgbyn4AaFScJt9ibGyE-5hUvkSJRTP-jlJjlPniYsKcjEY3C-QzyRcEIHoOHOEuevIFwVvKNRgEVYyx3CmkmIXcfw35R1tORNjCec_NA6dawx_LPpS0endjNz2m_iijLquKenrsKSKVnBprfVtBh_myuNQD5CfhBnzZRmAUfr0PoVMDBb0r_rWaV1Q64zQWSeCql7CSWq4U8RNhogd0eCZOOv45plIUwoxkdNg0Rzkp-OEtKRLaHonJ_OZ_sxa8-w",
-                        "e": "AQAB"
-                    }, format: 'jwk'
-                })
+                request.dpopJwk = {
+                    "kty": "RSA",
+                    "kid": "IlOPtWXUcpiPttmr-K7DmehzeRM",
+                    "n": "qv2XCvfUfW0bG547B1xieE0-GN8xLuCdzGcIWsYMP-fn1vR2ptR7XOp_kW-etlxSDT2MVyzdXbG9eQCgeBk-Ajgbyn4AaFScJt9ibGyE-5hUvkSJRTP-jlJjlPniYsKcjEY3C-QzyRcEIHoOHOEuevIFwVvKNRgEVYyx3CmkmIXcfw35R1tORNjCec_NA6dawx_LPpS0endjNz2m_iijLquKenrsKSKVnBprfVtBh_myuNQD5CfhBnzZRmAUfr0PoVMDBb0r_rWaV1Q64zQWSeCql7CSWq4U8RNhogd0eCZOOv45plIUwoxkdNg0Rzkp-OEtKRLaHonJ_OZ_sxa8-w",
+                    "e": "AQAB",
+                    "use": "sig"
+                }
                 
                 response = {}
             })
