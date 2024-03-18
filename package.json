@@ -17,7 +17,7 @@
     "preversion": "mocha test --recursive --timeout 20000",
     "standard": "standard",
     "test": "nyc mocha test --recursive --timeout 20000 && echo 'to view coverage: open coverage/index.html'",
-    "test-dpop": "nyc mocha test --timeout 20000 -g 'Dpop'"    
+    "test-dpop": "nyc mocha test --timeout 20000 -g 'Dpop'"
   },
   "repository": {
     "type": "git",
@@ -49,6 +49,7 @@
     "@solid/keychain": "^0.3.4",
     "base64url": "^3.0.1",
     "debug": "^4.3.1",
+    "jose": "^5.2.3",
     "jsonwebtoken": "^8.5.1",
     "jwk-thumbprint": "^0.1.4",
     "jwk-to-pem": "^2.0.5",
