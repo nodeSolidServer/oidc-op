@@ -44,27 +44,27 @@
   },
   "homepage": "https://github.com/solid/oidc-op#README",
   "dependencies": {
-    "@solid/jose": "^0.6.5",
+    "@solid/jose": "^0.6.8",
     "@solid/keychain": "^0.3.4",
     "base64url": "^3.0.1",
-    "debug": "^4.3.1",
+    "debug": "^4.4.3",
     "jsonwebtoken": "^9.0.2",
     "jwk-thumbprint": "^0.1.4",
-    "jwk-to-pem": "^2.0.5",
-    "qs": "^6.10.1",
-    "whatwg-url": "^8.5.0"
+    "jwk-to-pem": "^2.0.7",
+    "qs": "^6.14.0",
+    "whatwg-url": "^8.7.0"
   },
   "devDependencies": {
-    "chai": "^4.3.4",
-    "chai-as-promised": "^7.1.1",
-    "codecov": "^3.8.2",
+    "chai": "^4.5.0",
+    "chai-as-promised": "^7.1.2",
+    "codecov": "^3.8.3",
     "dirty-chai": "^2.0.1",
     "mocha": "^8.4.0",
-    "node-mocks-http": "^1.10.1",
+    "node-mocks-http": "^1.17.2",
     "nyc": "^15.1.0",
-    "sinon": "^11.1.1",
+    "sinon": "^11.1.2",
     "sinon-chai": "^3.7.0",
-    "standard": "^16.0.3"
+    "standard": "^16.0.4"
   },
   "nyc": {
     "reporter": [
