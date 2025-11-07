@@ -48,7 +48,7 @@
     "@solid/keychain": "^0.3.4",
     "base64url": "^3.0.1",
     "debug": "^4.3.1",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.2",
     "jwk-thumbprint": "^0.1.4",
     "jwk-to-pem": "^2.0.5",
     "qs": "^6.10.1",
