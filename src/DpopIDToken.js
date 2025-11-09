@@ -57,6 +57,11 @@ class DpopIDToken extends JWT {
     let header = { alg, kid }
     let payload = { iss, aud, azp, sub, exp, iat, jti }
 
+    // Add webid claim for Solid OIDC compliance
+    if (sub) {
+      payload.webid = sub
+    }
+
     if (at_hash) { payload.at_hash = at_hash }
     if (c_hash) { payload.c_hash = c_hash }
     if (cnf) { payload.cnf = cnf }
