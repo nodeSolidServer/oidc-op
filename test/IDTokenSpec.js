@@ -50,7 +50,7 @@ describe('IDToken', () => {
     describe('authentication request', () => {
       beforeEach(() => {
         client = { 'client_id': 'client123' }
-        params = { nonce: 'nonce123' }
+        params = { nonce: 'nonce123', scope: 'openid webid' }
         cnfKey = {
           'kty': 'RSA',
           'alg': 'RS256',
@@ -74,7 +74,7 @@ describe('IDToken', () => {
             expect(token.payload.iss).to.equal(providerUri)
             expect(token.payload.sub).to.equal('user123')
             expect(token.payload.webid).to.equal('user123')
-            expect(token.payload.aud).to.equal('client123')
+            expect(token.payload.aud).to.deep.equal(['client123', 'solid'])
             expect(token.payload.azp).to.equal('client123')
             expect(token.payload.cnf).to.eql({ jwk: cnfKey })
           })
@@ -87,7 +87,8 @@ describe('IDToken', () => {
         code = {
           aud: 'client123',
           sub: 'user123',
-          nonce: 'nonce123'
+          nonce: 'nonce123',
+          scope: 'openid webid'
         }
         cnfKey = {}
         request = { params, code, provider, client, subject, cnfKey }
@@ -108,7 +109,7 @@ describe('IDToken', () => {
             expect(token.payload.iss).to.equal(providerUri)
             expect(token.payload.sub).to.equal('user123')
             expect(token.payload.webid).to.equal('user123')
-            expect(token.payload.aud).to.equal('client123')
+            expect(token.payload.aud).to.deep.equal(['client123', 'solid'])
             expect(token.payload.azp).to.equal('client123')
             expect(token.payload.nonce).to.equal('nonce123')
             expect(token.payload.at_hash).to.equal('tGwJZ3NDJh8LQ5pHJCIiXg')
@@ -130,7 +131,8 @@ describe('IDToken', () => {
         nonce: 'n0nce',
         at_hash: 'athash123',
         c_hash: 'chash123',
-        cnf: { jwk: {} }
+        cnf: { jwk: {} },
+        scope: 'openid webid'
       }
     })
 

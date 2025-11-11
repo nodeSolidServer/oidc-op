@@ -41,7 +41,7 @@ class IDToken extends JWT {
   static issue (provider, options) {
     let { issuer, keys } = provider
 
-    let { aud, azp, sub, nonce, at_hash, c_hash, cnf } = options
+    let { aud, azp, sub, nonce, at_hash, c_hash, cnf, scope } = options
 
     let alg = options.alg || DEFAULT_SIG_ALGORITHM
     let jti = options.jti || random(8)
@@ -57,8 +57,8 @@ class IDToken extends JWT {
     let header = { alg, kid }
     let payload = { iss, aud, azp, sub, exp, iat, jti, nonce }
 
-    // Add webid claim for Solid OIDC compliance
-    if (sub) {
+    // Add webid claim for Solid OIDC compliance only if webid scope is requested
+    if (sub && scope && (scope.includes('webid') || scope.split(' ').includes('webid'))) {
       payload.webid = sub
     }
 
@@ -80,23 +80,26 @@ class IDToken extends JWT {
     let alg = client['id_token_signed_response_alg'] || DEFAULT_SIG_ALGORITHM
     let jti = random(8)
     let iat = Math.floor(Date.now() / 1000)
-    let aud, azp, sub, max, nonce
+    let aud, azp, sub, max, nonce, scope
 
     // authentication request
     if (!code) {
-      aud = client['client_id']
+      aud = [client['client_id'], 'solid']
       azp = client['client_id']
-      sub = subject['_id']
+      // Use WebID URL for sub if available (Solid OIDC compliance), otherwise use database ID
+      sub = subject?.webId || subject['_id']
       max = parseInt(params['max_age']) || client['default_max_age'] || DEFAULT_MAX_AGE
       nonce = params.nonce
+      scope = params.scope // Get the requested scope
 
     // token request
     } else {
-      aud = code.aud
-      azp = code.azp || aud
+      aud = Array.isArray(code.aud) ? [...code.aud, 'solid'] : [code.aud, 'solid']
+      azp = code.azp || (Array.isArray(code.aud) ? code.aud[0] : code.aud)
       sub = code.sub
       max = parseInt(code['max']) || client['default_max_age'] || DEFAULT_MAX_AGE
       nonce = code.nonce
+      scope = code.scope // Get the scope from authorization code
     }
 
     let len = alg.match(/(256|384|512)$/)[0]
@@ -111,7 +114,7 @@ class IDToken extends JWT {
       .then(hashes => {
         let [at_hash, c_hash] = hashes
 
-        let options = { alg, aud, azp, sub, iat, jti, nonce, at_hash, c_hash }
+        let options = { alg, aud, azp, sub, iat, jti, nonce, at_hash, c_hash, scope }
 
         if (request.cnfKey) {
           options.cnf = { jwk: request.cnfKey }
