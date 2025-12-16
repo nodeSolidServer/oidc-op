@@ -41,7 +41,7 @@ class DpopIDToken extends JWT {
   static issue (provider, options) {
     let { issuer, keys } = provider
 
-    let { aud, azp, sub, at_hash, c_hash, cnf } = options
+    let { aud, azp, sub, at_hash, c_hash, cnf, scope } = options
 
     let alg = options.alg || DEFAULT_SIG_ALGORITHM
     let jti = options.jti || random(8)
@@ -56,6 +56,11 @@ class DpopIDToken extends JWT {
 
     let header = { alg, kid }
     let payload = { iss, aud, azp, sub, exp, iat, jti }
+
+    // Add webid claim for Solid OIDC compliance when webid scope is requested
+    if (sub && scope && (scope.includes('webid') || scope.split(' ').includes('webid'))) {
+      payload.webid = sub
+    }
 
     if (at_hash) { payload.at_hash = at_hash }
     if (c_hash) { payload.c_hash = c_hash }
@@ -76,21 +81,29 @@ class DpopIDToken extends JWT {
     let alg = client['id_token_signed_response_alg'] || DEFAULT_SIG_ALGORITHM
     let jti = random(8)
     let iat = Math.floor(Date.now() / 1000)
-    let aud, azp, sub, max
+    let aud, azp, sub, max, scope
 
     // authentication request
     if (!code) {
-      aud = client['client_id']
+      aud = [client['client_id'], 'solid']
       azp = client['client_id']
-      sub = subject['_id']
+      // Use WebID URL for sub if available (Solid OIDC compliance), otherwise use database ID
+      sub = subject?.webId || subject['_id']
       max = parseInt(params['max_age']) || client['default_max_age'] || DEFAULT_MAX_AGE
+      scope = params.scope // Get the requested scope
 
     // token request
     } else {
-      aud = code.aud
-      azp = code.azp || aud
+      // Ensure aud is array containing both client_id and 'solid'
+      if (Array.isArray(code.aud) && code.aud.includes('solid')) {
+        aud = code.aud
+      } else {
+        aud = [code.aud, 'solid']
+      }
+      azp = code.azp || (Array.isArray(aud) ? aud[0] : aud)
       sub = code.sub
       max = parseInt(code['max']) || client['default_max_age'] || DEFAULT_MAX_AGE
+      scope = code.scope // Get the scope from authorization code
     }
 
     let len = alg.match(/(256|384|512)$/)[0]
@@ -105,7 +118,7 @@ class DpopIDToken extends JWT {
       .then(hashes => {
         let [at_hash, c_hash] = hashes
 
-        let options = { alg, aud, azp, sub, iat, jti, at_hash, c_hash }
+        let options = { alg, aud, azp, sub, iat, jti, at_hash, c_hash, scope }
 
         if (request.cnfKey) {
           options.cnf = { jwk: request.cnfKey }

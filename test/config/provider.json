@@ -26,7 +26,8 @@
   ],
   "scopes_supported": [
     "openid",
-    "offline_access"
+    "offline_access",
+    "webid"
   ],
   "subject_types_supported": [
     "public"
@@ -47,7 +48,14 @@
   "claim_types_supported": [
     "normal"
   ],
-  "claims_supported": "",
+  "claims_supported": [
+    "sub",
+    "iss", 
+    "aud",
+    "exp",
+    "iat",
+    "webid"
+  ],
   "claims_parameter_supported": false,
   "request_parameter_supported": false,
   "request_uri_parameter_supported": true,
