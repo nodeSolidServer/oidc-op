@@ -11,13 +11,13 @@
   },
   "scripts": {
     "build": "echo nothing to build",
-    "coverage": "nyc --reporter=lcov mocha test",
+    "coverage": "nyc --reporter=text mocha test",
     "jsdoc": "jsdoc -c jsdoc.json -r",
     "postversion": "git push --follow-tags",
     "preversion": "mocha test --recursive --timeout 20000",
     "prepublishOnly": "npm test",
     "standard": "standard",
-    "test": "nyc mocha test --recursive --timeout 20000 && echo 'to view coverage: open coverage/index.html'"
+    "test": "nyc mocha test --recursive --timeout 20000 && echo 'to view coverage: npm run coverage'"
   },
   "repository": {
     "type": "git",
@@ -58,7 +58,6 @@
   "devDependencies": {
     "chai": "^4.5.0",
     "chai-as-promised": "^7.1.2",
-    "codecov": "^3.8.3",
     "dirty-chai": "^2.0.1",
     "mocha": "^11.7.5",
     "node-mocks-http": "^1.17.2",
