@@ -5,6 +5,7 @@
  */
 const url = require('url')
 const KeyChain = require('@solid/keychain')
+const crypto = require('isomorphic-webcrypto')
 const AuthenticationRequest = require('./handlers/AuthenticationRequest')
 const OpenIDConfigurationRequest = require('./handlers/OpenIDConfigurationRequest')
 const DynamicRegistrationRequest = require('./handlers/DynamicRegistrationRequest')
@@ -71,7 +72,7 @@ class Provider {
     this.subject_types_supported = data.subject_types_supported ||
       DEFAULT_SUBJECT_TYPES_SUPPORTED
     this.id_token_signing_alg_values_supported =
-      data.id_token_signing_alg_values_supported || ['RS256']
+      data.id_token_signing_alg_values_supported || ['RS256', 'ES256']
     this.id_token_encryption_alg_values_supported =
       data.id_token_encryption_alg_values_supported
     this.id_token_encryption_enc_values_supported =
@@ -91,7 +92,7 @@ class Provider {
     this.token_endpoint_auth_methods_supported =
       data.token_endpoint_auth_methods_supported || ['client_secret_basic']
     this.token_endpoint_auth_signing_alg_values_supported =
-      data.token_endpoint_auth_signing_alg_values_supported || ['RS256']
+      data.token_endpoint_auth_signing_alg_values_supported || ['RS256', 'ES256']
     this.display_values_supported = data.display_values_supported || []
     this.claim_types_supported = data.claim_types_supported || ['normal']
     this.claims_supported = data.claims_supported || ['sub', 'iss', 'aud', 'exp', 'iat', 'webid']
@@ -136,7 +137,7 @@ class Provider {
   static async from (data) {
     const provider = new Provider(data)
 
-    await provider.initializeKeyChain(provider.keys)
+    await provider.initializeKeyChain(data.keys)
 
     return provider
   }
@@ -166,7 +167,10 @@ class Provider {
         signing: {
           RS256: { alg: 'RS256', modulusLength },
           RS384: { alg: 'RS384', modulusLength },
-          RS512: { alg: 'RS512', modulusLength }
+          RS512: { alg: 'RS512', modulusLength },
+          ES256: { alg: 'ES256', namedCurve: 'P-256' },
+          ES384: { alg: 'ES384', namedCurve: 'P-384' },
+          ES512: { alg: 'ES512', namedCurve: 'P-521' }
         },
         encryption: {
           // ?
@@ -176,7 +180,8 @@ class Provider {
         signing: {
           RS256: { alg: 'RS256', modulusLength },
           RS384: { alg: 'RS384', modulusLength },
-          RS512: { alg: 'RS512', modulusLength }
+          RS512: { alg: 'RS512', modulusLength },
+          ES256: { alg: 'ES256', namedCurve: 'P-256' }
         },
         encryption: {}
       },
@@ -185,12 +190,13 @@ class Provider {
       },
       register: {
         signing: {
-          RS256: { alg: 'RS256', modulusLength }
+          RS256: { alg: 'RS256', modulusLength },
+          ES256: { alg: 'ES256', namedCurve: 'P-256' }
         }
       }
     }
 
-    this.keys = new KeyChain(descriptor)
+    this.keys = new KeyChain(descriptor, { crypto })
     return this.keys.rotate()
   }
 
@@ -205,7 +211,7 @@ class Provider {
       return Promise.reject(new Error('Cannot import empty keychain'))
     }
 
-    return KeyChain.restore(data)
+    return KeyChain.restore(data, { crypto })
       .then(keychain => {
         this.keys = keychain
 
