@@ -43,6 +43,12 @@ class DpopIDToken extends JWT {
 
     let { aud, azp, sub, at_hash, c_hash, cnf, scope } = options
 
+    // If audience is an array and azp wasn't provided, default azp to the
+    // first audience entry so DPoP ID tokens include azp when `aud` is an array.
+    if (Array.isArray(aud) && !azp) {
+      azp = aud[0]
+    }
+
     let alg = options.alg || DEFAULT_SIG_ALGORITHM
     let jti = options.jti || random(8)
     let iat = options.iat || Math.floor(Date.now() / 1000)
@@ -56,6 +62,11 @@ class DpopIDToken extends JWT {
 
     let header = { alg, kid }
     let payload = { iss, aud, azp, sub, exp, iat, jti }
+
+    // Ensure azp is in payload when aud is an array (required by OIDC spec)
+    if (Array.isArray(aud) && !payload.azp) {
+      payload.azp = aud[0]
+    }
 
     // Add webid claim for Solid OIDC compliance when webid scope is requested
     if (sub && scope && (scope.includes('webid') || scope.split(' ').includes('webid'))) {

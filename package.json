@@ -1,6 +1,6 @@
 {
   "name": "@solid/oidc-op",
-  "version": "0.11.8",
+  "version": "0.12.0",
   "engines": {
     "node": ">=10.0"
   },
@@ -45,8 +45,8 @@
   },
   "homepage": "https://github.com/solid/oidc-op#README",
   "dependencies": {
-    "@solid/jose": "^0.6.9",
-    "@solid/keychain": "^0.3.5",
+    "@solid/jose": "^0.7.0",
+    "@solid/keychain": "^0.4.0",
     "base64url": "^3.0.1",
     "debug": "^4.4.3",
     "jsonwebtoken": "^9.0.3",
