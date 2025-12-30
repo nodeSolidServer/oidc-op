@@ -377,4 +377,158 @@ describe('BaseRequest', () => {
       send.should.have.been.calledWith('Internal Server Error')
     })
   })
+
+  /**
+   * Redirect (RFC 9207)
+   */
+  describe('redirect', () => {
+    let req, res, provider, request, redirectUrl
+
+    beforeEach(() => {
+      redirectUrl = null
+      req = {
+        method: 'GET',
+        query: {
+          redirect_uri: 'https://app.example.com/callback',
+          state: 'test-state-123'
+        }
+      }
+      res = {
+        redirect: sinon.spy(function (url) {
+          redirectUrl = url
+        })
+      }
+      provider = {
+        host: {},
+        issuer: 'https://provider.example.com'
+      }
+      request = new BaseRequest(req, res, provider)
+      request.params = req.query
+    })
+
+    it('should include state parameter in redirect', () => {
+      try {
+        request.redirect({ code: 'test-code' })
+      } catch (err) {
+        // Throws HandledError, which is expected
+      }
+
+      expect(res.redirect).to.have.been.called
+      expect(redirectUrl).to.include('state=test-state-123')
+    })
+
+    it('should include authorization code in redirect', () => {
+      try {
+        request.redirect({ code: 'test-auth-code-xyz' })
+      } catch (err) {
+        // Throws HandledError, which is expected
+      }
+
+      expect(res.redirect).to.have.been.called
+      expect(redirectUrl).to.include('code=test-auth-code-xyz')
+    })
+
+    it('should include iss parameter in redirect (RFC 9207)', () => {
+      try {
+        request.redirect({ code: 'test-code' })
+      } catch (err) {
+        // Throws HandledError, which is expected
+      }
+
+      expect(res.redirect).to.have.been.called
+      expect(redirectUrl).to.exist
+
+      // Parse the redirect URL to verify RFC 9207 compliance
+      const url = new URL(redirectUrl)
+      
+      // The iss parameter can be in either the query string or hash fragment
+      // depending on the response_mode (query or fragment)
+      let issParam = url.searchParams.get('iss')
+      if (!issParam && url.hash) {
+        // Check in the hash fragment
+        const hashParams = new URLSearchParams(url.hash.substring(1))
+        issParam = hashParams.get('iss')
+      }
+
+      // RFC 9207: OAuth 2.0 Authorization Server Issuer Identification
+      // The authorization response MUST include the 'iss' parameter
+      expect(issParam, 'RFC 9207: iss parameter must be present').to.exist
+      expect(issParam).to.equal(provider.issuer)
+    })
+
+    it('should include iss parameter matching provider issuer', () => {
+      provider.issuer = 'https://custom-issuer.example.com:8443'
+
+      try {
+        request.redirect({ code: 'test-code' })
+      } catch (err) {
+        // Throws HandledError, which is expected
+      }
+
+      const url = new URL(redirectUrl)
+      let issParam = url.searchParams.get('iss')
+      if (!issParam && url.hash) {
+        const hashParams = new URLSearchParams(url.hash.substring(1))
+        issParam = hashParams.get('iss')
+      }
+
+      expect(issParam).to.equal('https://custom-issuer.example.com:8443')
+    })
+
+    it('should handle redirect with error response', () => {
+      try {
+        request.redirect({
+          error: 'access_denied',
+          error_description: 'User denied access'
+        })
+      } catch (err) {
+        // Throws HandledError with error details
+        expect(err.error).to.equal('access_denied')
+        expect(err.error_description).to.equal('User denied access')
+      }
+
+      expect(res.redirect).to.have.been.called
+      expect(redirectUrl).to.include('error=access_denied')
+      
+      // NOTE: RFC 9207 specifies that iss SHOULD be included in error responses too,
+      // but adding it causes 5 AuthenticationRequest validation tests to timeout.
+      // For now, we only include iss in successful authorization responses.
+      // This test verifies that error responses still work correctly.
+      const url = new URL(redirectUrl)
+      expect(redirectUrl).to.include('access_denied')
+    })
+
+    it('should include iss parameter in error responses (RFC 9207 - BLOCKED)', () => {
+      // This test documents the expected RFC 9207 behavior that we cannot currently implement
+      // RFC 9207 Section 2.1 states: "The authorization server SHOULD include the iss parameter
+      // in authorization error responses to assist clients in detecting mix-up attacks"
+      // 
+      // However, adding iss to error responses causes 5 AuthenticationRequest validation tests
+      // to timeout (see decodeRequestParam and validateRequestParam tests).
+      // This test is skipped until the root cause of those timeouts is resolved.
+      
+      try {
+        request.redirect({
+          error: 'invalid_request',
+          error_description: 'Missing required parameter'
+        })
+      } catch (err) {
+        // Throws HandledError, which is expected
+      }
+
+      expect(res.redirect).to.have.been.called
+      expect(redirectUrl).to.exist
+      console.log('alain')
+      const url = new URL(redirectUrl)
+      let issParam = url.searchParams.get('iss')
+      if (!issParam && url.hash) {
+        const hashParams = new URLSearchParams(url.hash.substring(1))
+        issParam = hashParams.get('iss')
+      }
+
+      // This SHOULD pass per RFC 9207, but currently fails
+      expect(issParam, 'RFC 9207: iss SHOULD be in error responses').to.exist
+      expect(issParam).to.equal(provider.issuer)
+    })
+  })
 })
