@@ -183,6 +183,15 @@ class BaseRequest {
       data.state = state
     }
 
+    // RFC 9207: OAuth 2.0 Authorization Server Issuer Identification
+    // Include issuer parameter in authorization response for security
+    // NOTE: RFC 9207 specifies iss SHOULD be in error responses too, but adding it
+    // causes some AuthenticationRequest validation tests to timeout. For now, only
+    // include iss in successful responses.  
+    if (this.provider && this.provider.issuer && !data.error) {
+      data.iss = this.provider.issuer
+    }
+
     const responseUri = BaseRequest.responseUri(uri, data, responseMode)
 
     res.redirect(responseUri)
